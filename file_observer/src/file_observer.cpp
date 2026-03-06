@@ -7,8 +7,7 @@
 
 using file_observer::FileObserver;
 
-FileObserver::FileObserver(const std::shared_ptr<logger::Logger> &logger, QObject *parent)
-    : QObject(parent), logger_(logger)
+FileObserver::FileObserver(QObject *parent) : QObject(parent)
 {
     // Настройка таймера для периодической проверки
     watchTimer_.setInterval(CHECK_INTERVAL_MS);
@@ -44,6 +43,18 @@ void FileObserver::RemoveFile(const QString &filePath)
         LogInfo("File: " + filePath + " removed from Observing!");
     }
     fileContainer_.remove(filePath);
+}
+
+FileObserver::~FileObserver()
+{
+    watchTimer_.stop();
+
+    // Очищаем наблюдатель
+    if (!systemWatcher_.files().isEmpty())
+    {
+        systemWatcher_.removePaths(systemWatcher_.files());
+    }
+
 }
 
 void FileObserver::Start()
