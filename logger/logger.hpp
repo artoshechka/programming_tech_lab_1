@@ -1,8 +1,9 @@
 /// @file
 /// @brief Объявление класса логгера для приложения
 /// @author Artemenko Anton
-#ifndef LOGGER_HPP
-#define LOGGER_HPP
+#ifndef GUID_bf511e9f_e9d2_4472_8314_ad892aaadfcd
+#define GUID_bf511e9f_e9d2_4472_8314_ad892aaadfcd
+#pragma once
 
 #include <QDateTime>
 #include <QFile>
@@ -101,4 +102,4 @@ class Logger : public QObject
 };
 } // namespace logger
 
-#endif // LOGGER_HPP
+#endif // GUID_bf511e9f_e9d2_4472_8314_ad892aaadfcd

@@ -9,7 +9,9 @@
 #include <QObject>
 #include <QString>
 #include <QTimer>
-
+#ifndef GUID_f2735f4b_5fd5_444d_b275_684e413b6822
+#define GUID_f2735f4b_5fd5_444d_b275_684e413b6822
+#pragma once
 namespace file_observer
 {
 
@@ -58,3 +60,4 @@ class FileObserver : public QObject
 };
 
 } // namespace file_observer
+#endif // GUID_f2735f4b_5fd5_444d_b275_684e413b6822
