@@ -25,32 +25,25 @@ int main(int argc, char *argv[])
 
     auto observer = std::make_shared<file_observer::FileObserver>();
 
-    QString path;
+    cout << "Enter file paths to observe (empty line to finish):\n";
 
-    if (argc > 1)
+    QVector<QString> paths;
+    while (true)
     {
-        path = argv[1];
-    }
-    else
-    {
-        cout << "Enter file path to observe: ";
+        cout << "Path: ";
         cout.flush();
-        path = cin.readLine();
+
+        QString path = cin.readLine().trimmed();
+
+        if (path.isEmpty())
+            break;
+        paths.append(path);
     }
 
-    QFileInfo info(path);
-    if (!info.exists())
+    for (const auto &path : paths)
     {
-        cout << "Error: No such file: " << path << "\n";
-        return 1;
+        observer->AddFile(path);
     }
-
-    observer->AddFile(path);
-
-    observer->Start();
-
-    cout << "Started observing file: " << path << "\n";
-    cout << "Press Ctrl+C to exit.\n";
 
     return app.exec();
 }

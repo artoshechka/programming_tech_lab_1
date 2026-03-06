@@ -9,8 +9,6 @@ using file_observer::FileObserver;
 
 FileObserver::FileObserver(QObject *parent) : QObject(parent)
 {
-    watchTimer_.setInterval(CHECK_INTERVAL_MS);
-    connect(&watchTimer_, &QTimer::timeout, this, &FileObserver::CheckFiles);
     connect(&systemWatcher_, &QFileSystemWatcher::fileChanged, this, &FileObserver::OnFileChanged);
 }
 
@@ -44,7 +42,6 @@ void FileObserver::RemoveFile(const QString &filePath)
 
 FileObserver::~FileObserver()
 {
-    watchTimer_.stop();
 
     if (!systemWatcher_.files().isEmpty())
     {
@@ -52,22 +49,14 @@ FileObserver::~FileObserver()
     }
 }
 
-void FileObserver::Start()
-{
-    watchTimer_.start();
-}
-
-void FileObserver::Stop()
-{
-    watchTimer_.stop();
-}
-
 void FileObserver::CheckFiles()
 {
+    LogTrace("started checking file");
     for (auto it = fileContainer_.cbegin(); it != fileContainer_.cend(); ++it)
     {
         CheckFileChanges(it.key());
     }
+    LogTrace("stopped checking file\n");
 }
 
 void FileObserver::OnFileChanged(const QString &path)
@@ -84,7 +73,9 @@ void FileObserver::CheckFileChanges(const QString &filePath)
 {
     auto it = fileContainer_.find(filePath);
     if (it == fileContainer_.end())
+    {
         return;
+    }
 
     QFileInfo currentInfo(filePath);
     QFileInfo &oldInfo = it.value();

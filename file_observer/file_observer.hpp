@@ -34,12 +34,6 @@ class FileObserver : public QObject
     /// @param[in] filePath Путь к файлу
     void RemoveFile(const QString &filePath);
 
-    /// @brief Запустить мониторинг
-    void Start();
-
-    /// @brief Остановить мониторинг
-    void Stop();
-
   private:
     /// @brief Проверить изменения в файле
     /// @param[in] filePath Путь к файлу
@@ -54,9 +48,7 @@ class FileObserver : public QObject
 
   private:
     QFileSystemWatcher systemWatcher_;             ///< Наблюдатель за файловой системой
-    QTimer watchTimer_;                            ///< Таймер для периодической проверки
     ObservingFileContainer fileContainer_;         ///< Контейнер наблюдаемых файлов
-    static constexpr int CHECK_INTERVAL_MS = 1000; ///< Интервал проверки (1 секунда)
 };
 
 } // namespace file_observer
