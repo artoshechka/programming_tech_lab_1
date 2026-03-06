@@ -1,6 +1,8 @@
 /// @file
 /// @brief Объявление класса, ответственного за мониторинг директорий
 /// @author Artemenko Anton
+#include <logger.hpp>
+
 #include <QFileInfo>
 #include <QFileSystemWatcher>
 #include <QHash>
@@ -19,7 +21,7 @@ class FileObserver : public QObject
     Q_OBJECT
 
   public:
-    explicit FileObserver(QObject *parent = nullptr);
+    explicit FileObserver(const std::shared_ptr<logger::Logger> &logger, QObject *parent = nullptr);
 
     /// @brief Добавить файл для наблюдения
     /// @param[in] filePath Путь к файлу
@@ -51,6 +53,7 @@ class FileObserver : public QObject
     QFileSystemWatcher systemWatcher_;             ///< Наблюдатель за файловой системой
     QTimer watchTimer_;                            ///< Таймер для периодической проверки
     ObservingFileContainer fileContainer_;         ///< Контейнер наблюдаемых файлов
+    std::shared_ptr<logger::Logger> logger_;       ///< Интерфейс для логгирования
     static constexpr int CHECK_INTERVAL_MS = 1000; ///< Интервал проверки (1 секунда)
 };
 

@@ -3,10 +3,12 @@
 /// @author Artemenko Anton
 
 #include <file_observer.hpp>
+#include <logger_macros.hpp>
 
 using file_observer::FileObserver;
 
-FileObserver::FileObserver(QObject *parent) : QObject(parent)
+FileObserver::FileObserver(const std::shared_ptr<logger::Logger> &logger, QObject *parent)
+    : QObject(parent), logger_(logger)
 {
     // Настройка таймера для периодической проверки
     watchTimer_.setInterval(CHECK_INTERVAL_MS);
@@ -31,7 +33,7 @@ void FileObserver::AddFile(const QString &filePath)
     QFileInfo fileInfo(filePath);
     fileContainer_[filePath] = fileInfo;
 
-    // Тут необходимо добавить логирование
+    LogInfo("File: " + fileInfo.absoluteFilePath() + " added under Observing!");
 }
 
 void FileObserver::RemoveFile(const QString &filePath)
@@ -39,6 +41,7 @@ void FileObserver::RemoveFile(const QString &filePath)
     if (systemWatcher_.files().contains(filePath))
     {
         systemWatcher_.removePath(filePath);
+        LogInfo("File: " + filePath + " removed from Observing!");
     }
     fileContainer_.remove(filePath);
 }
@@ -55,7 +58,6 @@ void FileObserver::Stop()
 
 void FileObserver::CheckFiles()
 {
-    // Проверяем все наблюдаемые файлы
     for (auto it = fileContainer_.begin(); it != fileContainer_.end(); ++it)
     {
         CheckFileChanges(it.key());
@@ -64,7 +66,6 @@ void FileObserver::CheckFiles()
 
 void FileObserver::OnFileChanged(const QString &path)
 {
-    // Файл изменился, проверяем изменения
     CheckFileChanges(path);
 }
 
@@ -74,18 +75,15 @@ void FileObserver::CheckFileChanges(const QString &filePath)
     if (it == fileContainer_.end())
         return;
 
-    // Получаем текущую информацию о файле
     QFileInfo currentInfo(filePath);
     const QFileInfo &oldInfo = it.value();
 
-    // Проверяем, изменилось ли состояние
     bool existsChanged = (currentInfo.exists() != oldInfo.exists());
     bool sizeChanged = (currentInfo.exists() && oldInfo.exists() && currentInfo.size() != oldInfo.size());
 
     if (existsChanged || sizeChanged)
     {
-        // Файл изменился
-        // Тут надо залогировать
+        LogInfo("File: " + currentInfo.absoluteFilePath() + " changed!");
         it.value() = currentInfo;
     }
 }
