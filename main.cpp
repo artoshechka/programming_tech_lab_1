@@ -1,3 +1,6 @@
+/// @file
+/// @brief Точка входа в программу
+/// @author Artemenko Anton
 #include <file_observer.hpp>
 #include <logger.hpp>
 
@@ -20,7 +23,6 @@ int main(int argc, char *argv[])
 
     const auto &logger = logger::Logger::Instance();
 
-    // Создаем наблюдатель за файлами
     auto observer = std::make_shared<file_observer::FileObserver>();
 
     QString path;

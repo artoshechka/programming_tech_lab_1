@@ -9,11 +9,8 @@ using file_observer::FileObserver;
 
 FileObserver::FileObserver(QObject *parent) : QObject(parent)
 {
-    // Настройка таймера для периодической проверки
     watchTimer_.setInterval(CHECK_INTERVAL_MS);
     connect(&watchTimer_, &QTimer::timeout, this, &FileObserver::CheckFiles);
-
-    // Подключение сигналов файловой системы
     connect(&systemWatcher_, &QFileSystemWatcher::fileChanged, this, &FileObserver::OnFileChanged);
 }
 
@@ -22,17 +19,17 @@ void FileObserver::AddFile(const QString &filePath)
     if (filePath.isEmpty())
         return;
 
-    // Добавляем файл в наблюдатель
     if (!systemWatcher_.files().contains(filePath))
     {
         systemWatcher_.addPath(filePath);
     }
 
-    // Сохраняем информацию о файле
     QFileInfo fileInfo(filePath);
     fileContainer_[filePath] = fileInfo;
 
-    LogInfo("File: " + fileInfo.absoluteFilePath() + " added under Observing!");
+    LogInfo("File: " + fileInfo.absoluteFilePath() + " added under observing!");
+
+    CheckFileChanges(filePath);
 }
 
 void FileObserver::RemoveFile(const QString &filePath)
@@ -49,12 +46,10 @@ FileObserver::~FileObserver()
 {
     watchTimer_.stop();
 
-    // Очищаем наблюдатель
     if (!systemWatcher_.files().isEmpty())
     {
         systemWatcher_.removePaths(systemWatcher_.files());
     }
-
 }
 
 void FileObserver::Start()
@@ -69,7 +64,7 @@ void FileObserver::Stop()
 
 void FileObserver::CheckFiles()
 {
-    for (auto it = fileContainer_.begin(); it != fileContainer_.end(); ++it)
+    for (auto it = fileContainer_.cbegin(); it != fileContainer_.cend(); ++it)
     {
         CheckFileChanges(it.key());
     }
@@ -77,6 +72,11 @@ void FileObserver::CheckFiles()
 
 void FileObserver::OnFileChanged(const QString &path)
 {
+    if (!systemWatcher_.files().contains(path))
+    {
+        systemWatcher_.addPath(path);
+    }
+
     CheckFileChanges(path);
 }
 
@@ -87,14 +87,40 @@ void FileObserver::CheckFileChanges(const QString &filePath)
         return;
 
     QFileInfo currentInfo(filePath);
-    const QFileInfo &oldInfo = it.value();
+    QFileInfo &oldInfo = it.value();
 
-    bool existsChanged = (currentInfo.exists() != oldInfo.exists());
-    bool sizeChanged = (currentInfo.exists() && oldInfo.exists() && currentInfo.size() != oldInfo.size());
-
-    if (existsChanged || sizeChanged)
+    // Файл не существует
+    if (!currentInfo.exists())
     {
-        LogInfo("File: " + currentInfo.absoluteFilePath() + " changed!");
-        it.value() = currentInfo;
+        if (oldInfo.exists())
+        {
+            LogInfo("File: " + filePath + " does not exist.");
+        }
+
+        oldInfo = currentInfo;
+        return;
     }
+
+    // Файл существует
+    if (oldInfo.exists())
+    {
+        // Проверка изменения размера
+        if (currentInfo.size() != oldInfo.size())
+        {
+            LogInfo("File: " + filePath + " was changed. New size: " + QString::number(currentInfo.size()));
+        }
+    }
+    else
+    {
+        // Файл появился
+        LogInfo("File: " + filePath + " appeared. Size: " + QString::number(currentInfo.size()));
+    }
+
+    // Файл существует и не пустой
+    if (currentInfo.exists())
+    {
+        LogInfo("File: " + filePath + " exists. Size: " + QString::number(currentInfo.size()));
+    }
+
+    oldInfo = currentInfo;
 }
