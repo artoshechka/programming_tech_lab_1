@@ -7,6 +7,7 @@
 #include <QDir>
 #include <iostream>
 
+using logger::Logger;
 namespace
 {
 /// @brief Получить строковое представление уровня логирования

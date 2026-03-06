@@ -23,7 +23,8 @@ enum class LogLevel
     Error,   ///< Ошибка
     Fatal    ///< Фатальная ошибка
 };
-
+namespace logger
+{
 /// @brief Класс, ответственный за логирование событий приложения
 class Logger : public QObject
 {
@@ -99,5 +100,6 @@ class Logger : public QObject
     static constexpr qint64 DEFAULT_MAX_FILE_SIZE = 10 * 1024 * 1024; ///< 10 MB
     static constexpr int DEFAULT_MAX_BACKUP_FILES = 5;                ///< Количество backup файлов по умолчанию
 };
+} // namespace logger
 
 #endif // GUID_bf511e9f_e9d2_4472_8314_ad892aaadfcd
