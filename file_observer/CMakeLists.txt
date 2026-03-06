@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.2)
 project(file_observer LANGUAGES CXX)
 
 add_library(${PROJECT_NAME} STATIC
+    file_observer.hpp
     src/file_observer.cpp
 )
 

@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.2)
 project(logger LANGUAGES CXX)
 
 add_library(${PROJECT_NAME} STATIC
+    logger.hpp
+    logger_macros.hpp
     src/logger.cpp
 )
 
