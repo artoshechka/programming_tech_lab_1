@@ -3,15 +3,16 @@
 /// @author Artemenko Anton
 #ifndef GUID_8b9db8a0_64a9_4a28_a8e2_ef99f9a87516
 #define GUID_8b9db8a0_64a9_4a28_a8e2_ef99f9a87516
-#pragma once
 
 #include <ilogger.hpp>
 
-#include <memory>
 #include <QString>
 #include <QTextStream>
+#include <memory>
 
-namespace logger::detail
+namespace logger
+{
+namespace detail
 {
 /// @brief Вспомогательный потоковый объект для макросов вида LogDebug(ptr) << "message"
 class LogEntryStream final
@@ -23,14 +24,12 @@ class LogEntryStream final
     /// @param[in] file Имя файла
     /// @param[in] line Номер строки
     /// @param[in] function Имя функции
-    LogEntryStream(std::shared_ptr<ILogger> logger, LogLevel level, const char *file, int line,
-                   const char *function);
+    LogEntryStream(std::shared_ptr<ILogger> logger, LogLevel level, const char *file, int line, const char *function);
 
     /// @brief Деструктор, автоматически отправляет собранное сообщение в логгер
     ~LogEntryStream();
 
-    template <typename T>
-    LogEntryStream &operator<<(const T &value)
+    template <typename T> LogEntryStream &operator<<(const T &value)
     {
         stream_ << value;
         return *this;
@@ -38,14 +37,15 @@ class LogEntryStream final
 
   private:
     std::shared_ptr<ILogger> logger_; ///< Умный указатель на целевой логгер
-    LogLevel level_{LogLevel::Info};  ///< Уровень логирования сообщения
-    const char *file_{nullptr};       ///< Имя файла источника
-    int line_{0};                     ///< Номер строки источника
-    const char *function_{nullptr};   ///< Имя функции источника
+    LogLevel level_;                  ///< Уровень логирования сообщения
+    const char *file_;                ///< Имя файла источника
+    int line_;                        ///< Номер строки источника
+    const char *function_;            ///< Имя функции источника
     QString message_;                 ///< Буфер формируемого сообщения
     QTextStream stream_;              ///< Поток формирования сообщения через operator<<
 };
 
-} // namespace logger::detail
+} // namespace detail
+} // namespace logger
 
 #endif // GUID_8b9db8a0_64a9_4a28_a8e2_ef99f9a87516

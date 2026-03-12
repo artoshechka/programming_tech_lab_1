@@ -3,7 +3,6 @@
 /// @author Artemenko Anton
 #ifndef GUID_76731180_6258_4b6b_b2a7_4ef2b0039d4d
 #define GUID_76731180_6258_4b6b_b2a7_4ef2b0039d4d
-#pragma once
 
 #include <QString>
 

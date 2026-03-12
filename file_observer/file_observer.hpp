@@ -11,21 +11,18 @@
 #include <QTimer>
 
 #include <memory>
+
 #ifndef GUID_f2735f4b_5fd5_444d_b275_684e413b6822
 #define GUID_f2735f4b_5fd5_444d_b275_684e413b6822
-#pragma once
 namespace file_observer
 {
 /// @brief Состояние наблюдаемого файла
 struct ObservedFileState
 {
-    ObservedFileState() = default;
-    ObservedFileState(bool existsState, qint64 sizeState) : exists(existsState), size(sizeState)
-    {
-    }
+    ObservedFileState(bool existsState = false, qint64 sizeState = 0);
 
-    bool exists{false}; ///< Признак существования файла
-    qint64 size{0};     ///< Последний известный размер файла
+    bool exists_; ///< Признак существования файла
+    qint64 size_; ///< Последний известный размер файла
 };
 
 /// @brief Контейнер для хранения информации о наблюдаемых файлах

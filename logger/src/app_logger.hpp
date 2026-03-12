@@ -3,7 +3,6 @@
 /// @author Artemenko Anton
 #ifndef GUID_14f30de6_d704_49d2_a2d5_649fb7c41a3b
 #define GUID_14f30de6_d704_49d2_a2d5_649fb7c41a3b
-#pragma once
 
 #include <ilogger.hpp>
 
