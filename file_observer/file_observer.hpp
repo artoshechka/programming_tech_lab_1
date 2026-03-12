@@ -14,8 +14,18 @@
 #pragma once
 namespace file_observer
 {
+/// @brief Состояние наблюдаемого файла
+struct ObservedFileState
+{
+  ObservedFileState() = default;
+  ObservedFileState(bool existsState, qint64 sizeState) : exists(existsState), size(sizeState) {}
 
-using ObservingFileContainer = QHash<QString, QFileInfo>;
+  bool exists{false};   ///< Признак существования файла
+  qint64 size{0};       ///< Последний известный размер файла
+};
+
+/// @brief Контейнер для хранения информации о наблюдаемых файлах
+using ObservingFileContainer = QHash<QString, ObservedFileState>;
 
 /// @brief Класс, ответственный за мониторинг
 class FileObserver : public QObject
@@ -48,6 +58,7 @@ class FileObserver : public QObject
 
   private:
     QFileSystemWatcher systemWatcher_;             ///< Наблюдатель за файловой системой
+    QTimer pollTimer_;                             ///< Таймер периодической проверки существования/размера
     ObservingFileContainer fileContainer_;         ///< Контейнер наблюдаемых файлов
 };
 
