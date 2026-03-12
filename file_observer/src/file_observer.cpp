@@ -3,6 +3,7 @@
 /// @author Artemenko Anton
 
 #include <file_observer.hpp>
+#include <logger_factory.hpp>
 #include <logger_macros.hpp>
 
 using file_observer::FileObserver;
@@ -22,6 +23,8 @@ void FileObserver::AddFile(const QString &filePath)
     if (filePath.isEmpty())
         return;
 
+    auto observerLogger = logger::GetObserverLogger();
+
     // Добавляем файл в наблюдатель
     if (!systemWatcher_.files().contains(filePath))
     {
@@ -32,15 +35,17 @@ void FileObserver::AddFile(const QString &filePath)
     QFileInfo fileInfo(filePath);
     fileContainer_[filePath] = fileInfo;
 
-    LogInfo("File: " + fileInfo.absoluteFilePath() + " added under Observing!");
+    LogInfo(observerLogger) << "File: " << fileInfo.absoluteFilePath() << " added under observing.";
 }
 
 void FileObserver::RemoveFile(const QString &filePath)
 {
+    auto observerLogger = logger::GetObserverLogger();
+
     if (systemWatcher_.files().contains(filePath))
     {
         systemWatcher_.removePath(filePath);
-        LogInfo("File: " + filePath + " removed from Observing!");
+        LogInfo(observerLogger) << "File: " << filePath << " removed from observing.";
     }
     fileContainer_.remove(filePath);
 }
@@ -82,6 +87,8 @@ void FileObserver::OnFileChanged(const QString &path)
 
 void FileObserver::CheckFileChanges(const QString &filePath)
 {
+    auto observerLogger = logger::GetObserverLogger();
+
     auto it = fileContainer_.find(filePath);
     if (it == fileContainer_.end())
         return;
@@ -94,7 +101,9 @@ void FileObserver::CheckFileChanges(const QString &filePath)
 
     if (existsChanged || sizeChanged)
     {
-        LogInfo("File: " + currentInfo.absoluteFilePath() + " changed!");
+        LogInfo(observerLogger) << "File: " << currentInfo.absoluteFilePath()
+                                << " changed. Exists: " << currentInfo.exists()
+                                << ", size: " << currentInfo.size();
         it.value() = currentInfo;
     }
 }

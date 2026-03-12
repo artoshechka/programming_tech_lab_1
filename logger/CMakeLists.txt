@@ -2,9 +2,16 @@ cmake_minimum_required(VERSION 3.16)
 project(logger LANGUAGES CXX)
 
 add_library(${PROJECT_NAME} STATIC
-    logger.hpp
+    ilogger.hpp
+    logger_factory.hpp
     logger_macros.hpp
-    src/logger.cpp
+    src/app_logger.hpp
+    src/app_logger.cpp
+    src/log_entry_stream.hpp
+    src/log_entry_stream.cpp
+    src/observer_logger.hpp
+    src/observer_logger.cpp
+    src/logger_factory.cpp
 )
 
 find_package(QT NAMES Qt5 REQUIRED COMPONENTS Core)
@@ -13,6 +20,7 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 target_include_directories(${PROJECT_NAME}
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 target_link_libraries(${PROJECT_NAME}

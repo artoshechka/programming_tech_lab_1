@@ -1,8 +1,6 @@
 /// @file
 /// @brief Объявление класса, ответственного за мониторинг директорий
 /// @author Artemenko Anton
-#include <logger.hpp>
-
 #include <QFileInfo>
 #include <QFileSystemWatcher>
 #include <QHash>
