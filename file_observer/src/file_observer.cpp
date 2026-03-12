@@ -5,9 +5,12 @@
 #include <file_observer.hpp>
 #include <logger_macros.hpp>
 
+#include <utility>
+
 using file_observer::FileObserver;
 
-FileObserver::FileObserver(QObject *parent) : QObject(parent)
+FileObserver::FileObserver(std::shared_ptr<logger::ILogger> observerLogger, QObject *parent)
+    : QObject(parent), observerLogger_(std::move(observerLogger))
 {
     connect(&systemWatcher_, &QFileSystemWatcher::fileChanged, this, &FileObserver::OnFileChanged);
     connect(&pollTimer_, &QTimer::timeout, this, &FileObserver::CheckFiles);
@@ -36,7 +39,6 @@ void FileObserver::RemoveFile(const QString &filePath)
     if (systemWatcher_.files().contains(filePath))
     {
         systemWatcher_.removePath(filePath);
-        LogInfo("File: " + filePath + " removed from Observing!");
     }
     fileContainer_.remove(filePath);
 }
@@ -90,24 +92,23 @@ void FileObserver::CheckFileChanges(const QString &filePath)
     {
         if (sizeChanged)
         {
-            LogInfo("File: " + filePath +
-                    " exists and was changed. New size: " + QString::number(sizeNow));
+            LogInfo(observerLogger_) << "File changed: " << filePath << ", size=" << sizeNow;
         }
         else if (existenceChanged)
         {
             if (sizeNow > 0)
             {
-                LogInfo("File: " + filePath + " exists. Size: " + QString::number(sizeNow));
+                LogInfo(observerLogger_) << "File exists: " << filePath << ", size=" << sizeNow;
             }
             else
             {
-                LogInfo("File: " + filePath + " exists but is empty.");
+                LogInfo(observerLogger_) << "File exists but empty: " << filePath;
             }
         }
     }
     else if (existenceChanged)
     {
-        LogInfo("File: " + filePath + " does not exist.");
+        LogInfo(observerLogger_) << "File does not exist: " << filePath;
     }
 
     previous.exists = existsNow;

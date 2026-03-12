@@ -2,17 +2,166 @@
 /// @brief Точка входа в программу
 /// @author Artemenko Anton
 #include <file_observer.hpp>
-#include <logger.hpp>
+#include <logger_factory.hpp>
+#include <logger_macros.hpp>
 
 #include <QCoreApplication>
-#include <QFileInfo>
 #include <QSet>
 #include <QSocketNotifier>
 #include <QTextStream>
+#include <QVector>
 
-#include <chrono>
 #include <cstdio>
-#include <thread>
+
+namespace
+{
+/// @brief Разбирает аргументы командной строки и определяет режим вывода логов.
+/// @param[in] argc количество аргументов командной строки
+/// @param[in] argv массив аргументов командной строки
+/// @return выбранный режим вывода логов
+logger::LoggerOutputMode ParseLogOutputMode(int argc, char *argv[])
+{
+    logger::LoggerOutputMode mode = logger::LoggerOutputMode::Console;
+
+    for (int i = 1; i < argc; ++i)
+    {
+        const QString arg = argv[i];
+        if (arg == "--log-output=file")
+        {
+            mode = logger::LoggerOutputMode::File;
+        }
+        else if (arg == "--log-output=console")
+        {
+            mode = logger::LoggerOutputMode::Console;
+        }
+    }
+
+    return mode;
+}
+
+/// @brief Выводит список доступных команд интерактивной консоли.
+/// @param[in,out] cout поток вывода в консоль
+void PrintHelp(QTextStream &cout)
+{
+    cout << "Commands:\n";
+    cout << "  add <path>    - add file to monitoring\n";
+    cout << "  remove <path> - remove file from monitoring\n";
+    cout << "  list          - show all monitored files\n";
+    cout << "  quit          - exit program\n";
+}
+
+/// @brief Считывает начальный список файлов для наблюдения из консоли.
+/// @param[in,out] cin поток ввода из консоли
+/// @param[in,out] cout поток вывода в консоль
+/// @return список путей, введенных пользователем
+QVector<QString> ReadInitialPaths(QTextStream &cin, QTextStream &cout)
+{
+    QVector<QString> paths;
+
+    cout << "Enter file paths to observe (empty line to finish):\n";
+    while (true)
+    {
+        cout << "Path: ";
+        cout.flush();
+
+        const QString enteredPath = cin.readLine().trimmed();
+        if (enteredPath.isEmpty())
+        {
+            break;
+        }
+
+        paths.append(enteredPath);
+    }
+
+    return paths;
+}
+
+/// @brief Выводит текущий список наблюдаемых файлов.
+/// @param[in] observedPaths множество наблюдаемых путей
+/// @param[in,out] cout поток вывода в консоль
+void PrintObservedPaths(const QSet<QString> &observedPaths, QTextStream &cout)
+{
+    if (observedPaths.isEmpty())
+    {
+        cout << "No files are monitored.\n";
+        return;
+    }
+
+    cout << "Monitored files:\n";
+    for (const auto &path : observedPaths)
+    {
+        cout << "  " << path << "\n";
+    }
+}
+
+/// @brief Обрабатывает одну команду, введенную пользователем в консоли.
+/// @param[in] line исходная строка команды
+/// @param[in,out] cout поток вывода в консоль
+/// @param[in,out] observedPaths множество наблюдаемых путей
+/// @param[in] observer объект наблюдателя файлов
+/// @param[in] appLogger логгер приложения
+/// @param[in,out] app экземпляр приложения для завершения по команде `quit`
+void ProcessConsoleCommand(const QString &line, QTextStream &cout, QSet<QString> &observedPaths,
+                           const std::shared_ptr<file_observer::FileObserver> &observer,
+                           const std::shared_ptr<logger::ILogger> &appLogger, QCoreApplication &app)
+{
+    const QString trimmedLine = line.trimmed();
+    if (trimmedLine.isEmpty())
+    {
+        return;
+    }
+
+    if (trimmedLine == "help")
+    {
+        PrintHelp(cout);
+    }
+    else if (trimmedLine == "list")
+    {
+        PrintObservedPaths(observedPaths, cout);
+    }
+    else if (trimmedLine == "quit" || trimmedLine == "exit")
+    {
+        LogInfo(appLogger) << "Monitoring stopped by user command.";
+        app.quit();
+    }
+    else if (trimmedLine == "add" || trimmedLine.startsWith("add "))
+    {
+        const QString commandPath = trimmedLine.mid(4).trimmed();
+        if (commandPath.isEmpty())
+        {
+            cout << "Usage: add <path>\n";
+        }
+        else
+        {
+            observer->AddFile(commandPath);
+            observedPaths.insert(commandPath);
+            LogInfo(appLogger) << "Added file to monitoring: " << commandPath;
+        }
+    }
+    else if (trimmedLine == "remove" || trimmedLine.startsWith("remove "))
+    {
+        const QString commandPath = trimmedLine.mid(7).trimmed();
+        if (commandPath.isEmpty())
+        {
+            cout << "Usage: remove <path>\n";
+        }
+        else
+        {
+            observer->RemoveFile(commandPath);
+            observedPaths.remove(commandPath);
+            LogInfo(appLogger) << "Removed file from monitoring: " << commandPath;
+        }
+    }
+    else
+    {
+        cout << "Unknown command: " << trimmedLine << "\n";
+        cout << "Type 'help' to see available commands.\n";
+        LogWarning(appLogger) << "Unknown console command: " << trimmedLine;
+    }
+
+    cout.flush();
+}
+} // namespace
 
 /// @brief Точка входа в программу.
 /// @param[in] argc количество аргументов командной строки
@@ -25,106 +174,39 @@ int main(int argc, char *argv[])
     QTextStream cin(stdin);
     QTextStream cout(stdout);
 
-    const auto &logger = logger::Logger::Instance();
+    const logger::LoggerOutputMode logOutputMode = ParseLogOutputMode(argc, argv);
+    logger::SetGlobalLogOutput(logOutputMode);
 
-    auto observer = std::make_shared<file_observer::FileObserver>();
+    auto appLogger = logger::GetAppLogger();
+    auto observerLogger = logger::GetObserverLogger();
+
+    auto observer = std::make_shared<file_observer::FileObserver>(observerLogger);
     QSet<QString> observedPaths;
-
-    cout << "Enter file paths to observe (empty line to finish):\n";
-
-    QVector<QString> paths;
-    while (true)
-    {
-        cout << "Path: ";
-        cout.flush();
-
-        QString path = cin.readLine().trimmed();
-
-        if (path.isEmpty())
-            break;
-        paths.append(path);
-    }
+    const QVector<QString> paths = ReadInitialPaths(cin, cout);
 
     for (const auto &path : paths)
     {
         observer->AddFile(path);
         observedPaths.insert(path);
+        LogInfo(appLogger) << "Added file to monitoring: " << path;
     }
 
-    cout << "Monitoring started" << "\n";
-    cout << "Commands:" << " add <path>, remove <path>, list, help, quit\n";
+    if (observedPaths.isEmpty())
+    {
+        cout << "No files were added. Use command: add <path>\n";
+    }
+
+    cout << "Monitoring started\n";
+    cout << "Commands: add <path>, remove <path>, list, help, quit\n";
     cout << "Type command and press Enter.\n";
     cout.flush();
 
+    LogInfo(appLogger) << "Monitoring started. Initial files count: " << observedPaths.size();
+
     auto stdinNotifier = std::make_shared<QSocketNotifier>(fileno(stdin), QSocketNotifier::Read);
-    QObject::connect(stdinNotifier.get(), &QSocketNotifier::activated, &app, [&, observer]() {
-        QString line = cin.readLine().trimmed();
-        if (line.isEmpty())
-        {
-            return;
-        }
-
-        if (line == "help")
-        {
-            cout << "Commands:\n";
-            cout << "  add <path>    - add file to monitoring\n";
-            cout << "  remove <path> - remove file from monitoring\n";
-            cout << "  list          - show all monitored files\n";
-            cout << "  quit          - exit program\n";
-        }
-        else if (line == "list")
-        {
-            if (observedPaths.isEmpty())
-            {
-                cout << "No files are monitored.\n";
-            }
-            else
-            {
-                cout << "Monitored files:\n";
-                for (const auto &path : observedPaths)
-                {
-                    cout << "  " << path << "\n";
-                }
-            }
-        }
-        else if (line == "quit" || line == "exit")
-        {
-            app.quit();
-            return;
-        }
-        else if (line == "add" || line.startsWith("add "))
-        {
-            QString path = line.mid(4).trimmed();
-            if (path.isEmpty())
-            {
-                cout << "Usage: add <path>\n";
-            }
-            else
-            {
-                observer->AddFile(path);
-                observedPaths.insert(path);
-            }
-        }
-        else if (line == "remove" || line.startsWith("remove "))
-        {
-            QString path = line.mid(7).trimmed();
-            if (path.isEmpty())
-            {
-                cout << "Usage: remove <path>\n";
-            }
-            else
-            {
-                observer->RemoveFile(path);
-                observedPaths.remove(path);
-            }
-        }
-        else
-        {
-            cout << "Unknown command: " << line << "\n";
-            cout << "Type 'help' to see available commands.\n";
-        }
-
-        cout.flush();
+    QObject::connect(stdinNotifier.get(), &QSocketNotifier::activated, &app, [&, observer, appLogger]() {
+        const QString line = cin.readLine();
+        ProcessConsoleCommand(line, cout, observedPaths, observer, appLogger, app);
     });
 
     return app.exec();

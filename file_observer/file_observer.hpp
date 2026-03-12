@@ -1,7 +1,7 @@
 /// @file
 /// @brief Объявление класса, ответственного за мониторинг директорий
 /// @author Artemenko Anton
-#include <logger.hpp>
+#include <ilogger.hpp>
 
 #include <QFileInfo>
 #include <QFileSystemWatcher>
@@ -9,6 +9,8 @@
 #include <QObject>
 #include <QString>
 #include <QTimer>
+
+#include <memory>
 #ifndef GUID_f2735f4b_5fd5_444d_b275_684e413b6822
 #define GUID_f2735f4b_5fd5_444d_b275_684e413b6822
 #pragma once
@@ -17,11 +19,13 @@ namespace file_observer
 /// @brief Состояние наблюдаемого файла
 struct ObservedFileState
 {
-  ObservedFileState() = default;
-  ObservedFileState(bool existsState, qint64 sizeState) : exists(existsState), size(sizeState) {}
+    ObservedFileState() = default;
+    ObservedFileState(bool existsState, qint64 sizeState) : exists(existsState), size(sizeState)
+    {
+    }
 
-  bool exists{false};   ///< Признак существования файла
-  qint64 size{0};       ///< Последний известный размер файла
+    bool exists{false}; ///< Признак существования файла
+    qint64 size{0};     ///< Последний известный размер файла
 };
 
 /// @brief Контейнер для хранения информации о наблюдаемых файлах
@@ -33,7 +37,7 @@ class FileObserver : public QObject
     Q_OBJECT
 
   public:
-    explicit FileObserver(QObject *parent = nullptr);
+    explicit FileObserver(std::shared_ptr<logger::ILogger> observerLogger, QObject *parent = nullptr);
     ~FileObserver();
 
     /// @brief Добавить файл для наблюдения
@@ -57,9 +61,10 @@ class FileObserver : public QObject
     void OnFileChanged(const QString &path);
 
   private:
-    QFileSystemWatcher systemWatcher_;             ///< Наблюдатель за файловой системой
-    QTimer pollTimer_;                             ///< Таймер периодической проверки существования/размера
-    ObservingFileContainer fileContainer_;         ///< Контейнер наблюдаемых файлов
+    QFileSystemWatcher systemWatcher_;                ///< Наблюдатель за файловой системой
+    QTimer pollTimer_;                                ///< Таймер периодической проверки существования/размера
+    ObservingFileContainer fileContainer_;            ///< Контейнер наблюдаемых файлов
+    std::shared_ptr<logger::ILogger> observerLogger_; ///< Логгер событий наблюдения
 };
 
 } // namespace file_observer
