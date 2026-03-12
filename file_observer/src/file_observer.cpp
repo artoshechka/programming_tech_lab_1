@@ -9,6 +9,11 @@
 
 using file_observer::FileObserver;
 
+file_observer::ObservedFileState::ObservedFileState(bool existsState, qint64 sizeState)
+    : exists_(existsState), size_(sizeState)
+{
+}
+
 FileObserver::FileObserver(std::shared_ptr<logger::ILogger> observerLogger, QObject *parent)
     : QObject(parent), observerLogger_(std::move(observerLogger))
 {
@@ -85,8 +90,8 @@ void FileObserver::CheckFileChanges(const QString &filePath)
     const bool existsNow = currentInfo.exists();
     const qint64 sizeNow = existsNow ? currentInfo.size() : 0;
 
-    const bool existenceChanged = previous.exists != existsNow;
-    const bool sizeChanged = existsNow && previous.exists && (previous.size != sizeNow);
+    const bool existenceChanged = previous.exists_ != existsNow;
+    const bool sizeChanged = existsNow && previous.exists_ && (previous.size_ != sizeNow);
 
     if (existsNow)
     {
@@ -111,8 +116,8 @@ void FileObserver::CheckFileChanges(const QString &filePath)
         LogInfo(observerLogger_) << "File does not exist: " << filePath;
     }
 
-    previous.exists = existsNow;
-    previous.size = sizeNow;
+    previous.exists_ = existsNow;
+    previous.size_ = sizeNow;
 
     if (!existsNow && systemWatcher_.files().contains(filePath))
     {
