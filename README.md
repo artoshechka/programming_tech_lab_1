@@ -130,23 +130,67 @@ sequenceDiagram
 ```
 
 ## Инструкция для пользователя
-Сборка проекта выполняется следующим образом.
+Сборка и запуск зависят от операционной системы.
 
-Необходимо создать директорию `build`:
-```console
+<details>
+<summary>Windows</summary>
+
+Создайте директорию `build` и перейдите в нее:
+```powershell
 mkdir -p build && cd build
 ```
 
-Сконфигурировать и собрать проект:
-```console
+>Примечание: при не настроенных переменных средах (PATH) необходимо прописывать полные пути до исполняемых файлов (cmake, windeployqt)
+
+Сконфигурируйте и соберите проект:
+```powershell
+cmake .. && cmake --build .
+```
+
+Далее может потребоваться произвести линковку для QT
+
+```powershell
+<path>\windeployqt .\file_observer_project.exe
+```
+
+Запустите программу:
+```powershell
+.\file_observer_project.exe --log-output=console
+```
+
+Логи в файлы:
+```powershell
+.\file_observer_project.exe --log-output=file
+```
+
+</details>
+
+<details>
+<summary>Linux / macOS</summary>
+
+Создайте директорию `build` и перейдите в нее:
+```bash
+mkdir -p build && cd build
+```
+
+Сконфигурируйте и соберите проект:
+```bash
 cmake ..
 cmake --build .
 ```
 
-Для запуска введите в консоль:
-```console
-./file_observer_project [--log-output=console | --log-output=file]
+Запустите программу:
+```bash
+./file_observer_project --log-output=console
 ```
+
+Логи в файлы:
+```bash
+./file_observer_project --log-output=file
+```
+
+</details>
+
 
 После запуска программа предложит ввести пути к файлам для наблюдения. Ввод завершается пустой строкой.
 
