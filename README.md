@@ -99,6 +99,36 @@ classDiagram
 	FileObserver o-- ILogger
 ```
 
+### Диаграмма сигнально-слотового взаимодействия
+
+```mermaid
+sequenceDiagram
+    participant FSW as QFileSystemWatcher
+    participant PT as QTimer
+    participant FO as FileObserver
+    participant LOG as ObserverLogger
+
+    Note over FO: Подключение сигналов в конструкторе:
+    Note over FO: fileChanged(path) -> OnFileChanged(path)
+    Note over FO: timeout() -> CheckFiles()
+
+    FSW-->>FO: fileChanged(path)
+    activate FO
+    FO->>FO: OnFileChanged(path)
+    FO->>FO: CheckFileChanges(path)
+    FO->>LOG: Log("Файл изменен")
+    deactivate FO
+
+    PT-->>FO: timeout()
+    activate FO
+    FO->>FO: CheckFiles()
+    loop Для каждого наблюдаемого файла
+        FO->>FO: CheckFileChanges(path)
+    end
+    FO->>LOG: Log("Состояние обновлено")
+    deactivate FO
+```
+
 ## Инструкция для пользователя
 Сборка проекта выполняется следующим образом.
 
