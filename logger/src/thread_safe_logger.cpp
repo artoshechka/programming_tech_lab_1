@@ -4,11 +4,11 @@
 
 #include <thread_safe_logger.hpp>
 
+#include <iostream>
+
 #include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
-
-#include <iostream>
 
 using logger::LogLevel;
 using logger::ThreadSafeLogger;
