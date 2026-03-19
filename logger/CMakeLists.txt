@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 project(logger LANGUAGES CXX)
 
 add_library(${PROJECT_NAME} STATIC
+    log_levels.hpp
+    log_settings.hpp
     ilogger.hpp
     logger_factory.hpp
     logger_macros.hpp
@@ -9,8 +11,11 @@ add_library(${PROJECT_NAME} STATIC
     src/app_logger.cpp
     src/log_entry_stream.hpp
     src/log_entry_stream.cpp
+    src/log_settings.cpp
     src/observer_logger.hpp
     src/observer_logger.cpp
+    src/thread_safe_logger.hpp
+    src/thread_safe_logger.cpp
     src/logger_factory.cpp
 )
 

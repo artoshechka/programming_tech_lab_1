@@ -40,49 +40,84 @@ classDiagram
 	class QObject
 	class QFileSystemWatcher
 	class QTimer
+	class QFile
+	class QTextStream
+	class QMutex
 
 	class ObservedFileState {
+		+ObservedFileState(bool existsState=false, qint64 sizeState=0)
 		+bool exists_
 		+qint64 size_
 	}
 
+	class LogLevel {
+		<<enumeration>>
+		Trace
+		Debug
+		Info
+		Warning
+		Error
+		Fatal
+	}
+
+	class LogOutput {
+		<<enumeration>>
+		Console
+		File
+	}
+
+	class LoggerSettings {
+		-QString logFilePath_
+		-LogLevel logLevel_
+		-LogOutput output_
+		+LoggerSettings()
+		+LoggerSettings(logFilePath, logLevel, output)
+	}
+
 	class ILogger {
 		<<interface>>
-		+SetLogFile(filename)
-		+SetLogLevel(level)
-		+SetOutput(output)
+		+SetSettings(settings)
+		+GetSettings()
 		+Log(level, message, file, line, function)
+	}
+
+	class ThreadSafeLogger {
+		#QString componentName_
+		-QFile logFile_
+		-QTextStream textStream_
+		-QMutex syncMutex_
+		-LoggerSettings settings_
+		+ThreadSafeLogger(componentName, output)
+		+~ThreadSafeLogger()
+		+SetSettings(settings)
+		+GetSettings()
+		+Log(level, message, file, line, function)
+		#FormatMessage(level, message, file, line, function)
+		#LogLevelToString(level)
 	}
 
 	class AppLogger {
-		-QFile logFile_
-		-QTextStream textStream_
-		-QMutex syncMutex_
-		-LogLevel currentLogLevel_
-		-LogOutput outputMode_
-		+SetLogFile(filename)
-		+SetLogLevel(level)
-		+SetOutput(output)
-		+Log(level, message, file, line, function)
+		+AppLogger(output)
+		+~AppLogger()
+		+FormatMessage(level, message, file, line, function)
 	}
 
 	class ObserverLogger {
-		-QFile logFile_
-		-QTextStream textStream_
-		-QMutex syncMutex_
-		-LogLevel currentLogLevel_
-		-LogOutput outputMode_
-		+SetLogFile(filename)
-		+SetLogLevel(level)
-		+SetOutput(output)
-		+Log(level, message, file, line, function)
+		+ObserverLogger(output)
+		+~ObserverLogger()
+		+FormatMessage(level, message, file, line, function)
 	}
+
+	class AppLoggerTag
+	class ObserverLoggerTag
 
 	class FileObserver {
 		-QFileSystemWatcher systemWatcher_
 		-QTimer pollTimer_
 		-ObservingFileContainer fileContainer_
 		-shared_ptr~ILogger~ observerLogger_
+		+FileObserver(observerLogger, parent)
+		+~FileObserver()
 		+AddFile(filePath)
 		+RemoveFile(filePath)
 		-CheckFileChanges(filePath)
@@ -91,42 +126,21 @@ classDiagram
 	}
 
 	QObject <|-- FileObserver
-	ILogger <|.. AppLogger
-	ILogger <|.. ObserverLogger
+	ILogger <|.. ThreadSafeLogger
+	ThreadSafeLogger <|-- AppLogger
+	ThreadSafeLogger <|-- ObserverLogger
+	ILogger ..> LoggerSettings
+	LoggerSettings ..> LogLevel
+	LoggerSettings ..> LogOutput
+	AppLoggerTag ..> ILogger
+	ObserverLoggerTag ..> ILogger
+	ThreadSafeLogger *-- QFile
+	ThreadSafeLogger *-- QTextStream
+	ThreadSafeLogger *-- QMutex
 	FileObserver *-- ObservedFileState
 	FileObserver *-- QFileSystemWatcher
 	FileObserver *-- QTimer
 	FileObserver o-- ILogger
-```
-
-### Диаграмма сигналов и слотов
-
-```mermaid
-sequenceDiagram
-    participant FSW as QFileSystemWatcher
-    participant PT as QTimer
-    participant FO as FileObserver
-    participant LOG as ObserverLogger
-
-    Note over FO: Подключение сигналов в конструкторе:
-    Note over FO: fileChanged(path) -> OnFileChanged(path)
-    Note over FO: timeout() -> CheckFiles()
-
-    FSW-->>FO: fileChanged(path)
-    activate FO
-    FO->>FO: OnFileChanged(path)
-    FO->>FO: CheckFileChanges(path)
-    FO->>LOG: Log("Файл изменен")
-    deactivate FO
-
-    PT-->>FO: timeout()
-    activate FO
-    FO->>FO: CheckFiles()
-    loop Для каждого наблюдаемого файла
-        FO->>FO: CheckFileChanges(path)
-    end
-    FO->>LOG: Log("Состояние обновлено")
-    deactivate FO
 ```
 
 ## Инструкция для пользователя
