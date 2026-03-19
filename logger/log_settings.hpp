@@ -6,8 +6,9 @@
 
 #include <log_levels.hpp>
 
-#include <QString>
 #include <optional>
+
+#include <QString>
 
 namespace logger
 {

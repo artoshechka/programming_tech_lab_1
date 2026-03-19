@@ -5,16 +5,18 @@
 #include <logger_factory.hpp>
 #include <logger_macros.hpp>
 
+#include <cstdio>
+#include <optional>
+#ifdef _WIN32
+#include <thread>
+#endif
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QSet>
 #include <QSocketNotifier>
 #include <QTextStream>
 #include <QVector>
-
-#include <cstdio>
-#include <optional>
-#include <thread>
 
 namespace
 {

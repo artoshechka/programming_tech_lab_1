@@ -3,14 +3,14 @@
 /// @author Artemenko Anton
 #include <ilogger.hpp>
 
+#include <memory>
+
 #include <QFileInfo>
 #include <QFileSystemWatcher>
 #include <QHash>
 #include <QObject>
 #include <QString>
 #include <QTimer>
-
-#include <memory>
 
 #ifndef GUID_f2735f4b_5fd5_444d_b275_684e413b6822
 #define GUID_f2735f4b_5fd5_444d_b275_684e413b6822
