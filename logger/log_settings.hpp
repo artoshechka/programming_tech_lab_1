@@ -7,6 +7,7 @@
 #include <log_levels.hpp>
 
 #include <QString>
+#include <optional>
 
 namespace logger
 {
@@ -20,18 +21,16 @@ enum class LogOutput
 /// @brief Полный набор настроек логгера
 struct LoggerSettings
 {
-    QString logFilePath_; ///< Путь к файлу лога
-    LogLevel logLevel_;   ///< Минимальный уровень логирования
-    LogOutput output_;    ///< Режим вывода логов
-
-    /// @brief Конструктор настроек по умолчанию
-    LoggerSettings();
-
-    /// @brief Конструктор с явными параметрами
-    /// @param[in] logFilePath Путь к файлу лога
+    /// @brief Конструктор настроек логгера
+    /// @param[in] logFilePath Путь к файлу лога (пустая строка означает отсутствие файла)
     /// @param[in] logLevel Минимальный уровень логирования
     /// @param[in] output Режим вывода логов
-    LoggerSettings(const QString &logFilePath, LogLevel logLevel, LogOutput output);
+    LoggerSettings(const std::optional<QString> &logFilePath = std::nullopt, LogLevel logLevel = LogLevel::Debug,
+                   LogOutput output = LogOutput::Console);
+
+    std::optional<QString> logFilePath_; ///< Опциональный путь к файлу лога
+    LogLevel logLevel_;                  ///< Минимальный уровень логирования
+    LogOutput output_;                   ///< Режим вывода логов
 };
 
 } // namespace logger

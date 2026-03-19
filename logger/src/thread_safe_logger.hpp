@@ -18,14 +18,14 @@ class ThreadSafeLogger : public ILogger
   public:
     /// @brief Конструктор потокобезопасного логгера
     /// @param[in] componentName Имя компонента для идентификации в логах
-    /// @param[in] output Режим вывода логов (по умолчанию консоль)
+    /// @param[in] output Режим вывода логов
     explicit ThreadSafeLogger(const QString &componentName, LogOutput output = LogOutput::Console);
 
     /// @brief Виртуальный деструктор
     ~ThreadSafeLogger() override;
 
     /// @brief Установить все настройки логгера одним вызовом
-    /// @param[in] settings Набор настроек логгера (путь файла, уровень, канал вывода)
+    /// @param[in] settings Набор настроек логгера
     void SetSettings(const LoggerSettings &settings) override;
 
     /// @brief Получить текущие настройки логгера
@@ -35,9 +35,9 @@ class ThreadSafeLogger : public ILogger
     /// @brief Записать сообщение в лог с полной синхронизацией
     /// @param[in] level Уровень логирования
     /// @param[in] message Текст сообщения
-    /// @param[in] file Имя исходного файла (опционально)
-    /// @param[in] line Номер строки (опционально)
-    /// @param[in] function Имя функции (опционально)
+    /// @param[in] file Имя исходного файла
+    /// @param[in] line Номер строки
+    /// @param[in] function Имя функции
     void Log(LogLevel level, const QString &message, const char *file = nullptr, int line = 0,
              const char *function = nullptr) override;
 

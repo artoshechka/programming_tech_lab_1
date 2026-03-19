@@ -36,27 +36,6 @@ void ThreadSafeLogger::SetSettings(const logger::LoggerSettings &settings)
     {
         logFile_.close();
     }
-
-    const QString logFilePath = settings_.logFilePath_;
-    if (logFilePath.isEmpty())
-    {
-        return;
-    }
-
-    logFile_.setFileName(logFilePath);
-
-    QDir dir(QFileInfo(logFilePath).absolutePath());
-    if (!dir.exists())
-    {
-        dir.mkpath(".");
-    }
-
-    if (logFile_.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text))
-    {
-        textStream_.setDevice(&logFile_);
-        textStream_.setCodec("UTF-8");
-        textStream_.flush();
-    }
 }
 
 logger::LoggerSettings ThreadSafeLogger::GetSettings() const
@@ -101,8 +80,33 @@ void ThreadSafeLogger::Log(LogLevel level, const QString &message, const char *f
     {
         std::cout << logEntry.toStdString() << std::endl;
     }
-    else if (settings_.output_ == LogOutput::File && logFile_.isOpen())
+    else if (settings_.output_ == LogOutput::File)
     {
+        if (!settings_.logFilePath_.has_value() || settings_.logFilePath_->isEmpty())
+        {
+            return;
+        }
+
+        const QString &logFilePath = settings_.logFilePath_.value();
+        if (!logFile_.isOpen())
+        {
+            logFile_.setFileName(logFilePath);
+
+            QDir dir(QFileInfo(logFilePath).absolutePath());
+            if (!dir.exists())
+            {
+                dir.mkpath(".");
+            }
+
+            if (!logFile_.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text))
+            {
+                return;
+            }
+
+            textStream_.setDevice(&logFile_);
+            textStream_.setCodec("UTF-8");
+        }
+
         textStream_ << logEntry << Qt::endl;
         textStream_.flush();
     }

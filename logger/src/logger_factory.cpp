@@ -13,7 +13,7 @@ namespace
 {
 template <typename TLoggerImpl> std::shared_ptr<ILogger> CreateAndConfigureLogger(const QString &logPath)
 {
-    auto instance = std::make_shared<TLoggerImpl>(LogOutput::Console);
+    auto instance = std::make_shared<TLoggerImpl>();
     instance->SetSettings(LoggerSettings(logPath, LogLevel::Debug, LogOutput::Console));
     return instance;
 }
