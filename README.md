@@ -37,41 +37,17 @@
 
 ```mermaid
 classDiagram
-	class QObject
-	class QFileSystemWatcher
-	class QTimer
-	class QFile
-	class QTextStream
-	class QMutex
-
 	class ObservedFileState {
 		+ObservedFileState(bool existsState=false, qint64 sizeState=0)
 		+bool exists_
 		+qint64 size_
 	}
 
-	class LogLevel {
-		<<enumeration>>
-		Trace
-		Debug
-		Info
-		Warning
-		Error
-		Fatal
-	}
-
-	class LogOutput {
-		<<enumeration>>
-		Console
-		File
-	}
-
 	class LoggerSettings {
-		-QString logFilePath_
-		-LogLevel logLevel_
-		-LogOutput output_
-		+LoggerSettings()
 		+LoggerSettings(logFilePath, logLevel, output)
+		+logFilePath_
+		+logLevel_
+		+output_
 	}
 
 	class ILogger {
@@ -82,11 +58,11 @@ classDiagram
 	}
 
 	class ThreadSafeLogger {
-		#QString componentName_
-		-QFile logFile_
-		-QTextStream textStream_
-		-QMutex syncMutex_
-		-LoggerSettings settings_
+		#componentName_
+		-logFile_
+		-textStream_
+		-syncMutex_
+		-settings_
 		+ThreadSafeLogger(componentName, output)
 		+~ThreadSafeLogger()
 		+SetSettings(settings)
@@ -108,14 +84,23 @@ classDiagram
 		+FormatMessage(level, message, file, line, function)
 	}
 
-	class AppLoggerTag
-	class ObserverLoggerTag
+	class LogEntryStream {
+		-logger_
+		-level_
+		-file_
+		-line_
+		-function_
+		-message_
+		-stream_
+		+LogEntryStream(logger, level, file, line, function)
+		+~LogEntryStream()
+	}
 
 	class FileObserver {
-		-QFileSystemWatcher systemWatcher_
-		-QTimer pollTimer_
-		-ObservingFileContainer fileContainer_
-		-shared_ptr~ILogger~ observerLogger_
+		-systemWatcher_
+		-pollTimer_
+		-fileContainer_
+		-observerLogger_
 		+FileObserver(observerLogger, parent)
 		+~FileObserver()
 		+AddFile(filePath)
@@ -125,22 +110,13 @@ classDiagram
 		-OnFileChanged(path)
 	}
 
-	QObject <|-- FileObserver
 	ILogger <|.. ThreadSafeLogger
 	ThreadSafeLogger <|-- AppLogger
 	ThreadSafeLogger <|-- ObserverLogger
-	ILogger ..> LoggerSettings
-	LoggerSettings ..> LogLevel
-	LoggerSettings ..> LogOutput
-	AppLoggerTag ..> ILogger
-	ObserverLoggerTag ..> ILogger
-	ThreadSafeLogger *-- QFile
-	ThreadSafeLogger *-- QTextStream
-	ThreadSafeLogger *-- QMutex
+	ThreadSafeLogger *-- LoggerSettings
 	FileObserver *-- ObservedFileState
-	FileObserver *-- QFileSystemWatcher
-	FileObserver *-- QTimer
 	FileObserver o-- ILogger
+	LogEntryStream o-- ILogger
 ```
 
 ## Инструкция для пользователя
