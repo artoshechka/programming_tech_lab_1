@@ -37,52 +37,72 @@
 
 ```mermaid
 classDiagram
-	class QObject
-	class QFileSystemWatcher
-	class QTimer
-
 	class ObservedFileState {
+		+ObservedFileState(bool existsState=false, qint64 sizeState=0)
 		+bool exists_
 		+qint64 size_
 	}
 
+	class LoggerSettings {
+		+LoggerSettings(logFilePath, logLevel, output)
+		+logFilePath_
+		+logLevel_
+		+output_
+	}
+
 	class ILogger {
 		<<interface>>
-		+SetLogFile(filename)
-		+SetLogLevel(level)
-		+SetOutput(output)
+		+SetSettings(settings)
+		+GetSettings()
 		+Log(level, message, file, line, function)
+	}
+
+	class ThreadSafeLogger {
+		#componentName_
+		-logFile_
+		-textStream_
+		-syncMutex_
+		-settings_
+		+ThreadSafeLogger(componentName, output)
+		+~ThreadSafeLogger()
+		+SetSettings(settings)
+		+GetSettings()
+		+Log(level, message, file, line, function)
+		#FormatMessage(level, message, file, line, function)
+		#LogLevelToString(level)
 	}
 
 	class AppLogger {
-		-QFile logFile_
-		-QTextStream textStream_
-		-QMutex syncMutex_
-		-LogLevel currentLogLevel_
-		-LogOutput outputMode_
-		+SetLogFile(filename)
-		+SetLogLevel(level)
-		+SetOutput(output)
-		+Log(level, message, file, line, function)
+		+AppLogger(output)
+		+~AppLogger()
+		+FormatMessage(level, message, file, line, function)
 	}
 
 	class ObserverLogger {
-		-QFile logFile_
-		-QTextStream textStream_
-		-QMutex syncMutex_
-		-LogLevel currentLogLevel_
-		-LogOutput outputMode_
-		+SetLogFile(filename)
-		+SetLogLevel(level)
-		+SetOutput(output)
-		+Log(level, message, file, line, function)
+		+ObserverLogger(output)
+		+~ObserverLogger()
+		+FormatMessage(level, message, file, line, function)
+	}
+
+	class LogEntryStream {
+		-logger_
+		-level_
+		-file_
+		-line_
+		-function_
+		-message_
+		-stream_
+		+LogEntryStream(logger, level, file, line, function)
+		+~LogEntryStream()
 	}
 
 	class FileObserver {
-		-QFileSystemWatcher systemWatcher_
-		-QTimer pollTimer_
-		-ObservingFileContainer fileContainer_
-		-shared_ptr~ILogger~ observerLogger_
+		-systemWatcher_
+		-pollTimer_
+		-fileContainer_
+		-observerLogger_
+		+FileObserver(observerLogger, parent)
+		+~FileObserver()
 		+AddFile(filePath)
 		+RemoveFile(filePath)
 		-CheckFileChanges(filePath)
@@ -90,43 +110,13 @@ classDiagram
 		-OnFileChanged(path)
 	}
 
-	QObject <|-- FileObserver
-	ILogger <|.. AppLogger
-	ILogger <|.. ObserverLogger
+	ILogger <|.. ThreadSafeLogger
+	ThreadSafeLogger <|-- AppLogger
+	ThreadSafeLogger <|-- ObserverLogger
+	ThreadSafeLogger *-- LoggerSettings
 	FileObserver *-- ObservedFileState
-	FileObserver *-- QFileSystemWatcher
-	FileObserver *-- QTimer
 	FileObserver o-- ILogger
-```
-
-### Диаграмма сигналов и слотов
-
-```mermaid
-sequenceDiagram
-    participant FSW as QFileSystemWatcher
-    participant PT as QTimer
-    participant FO as FileObserver
-    participant LOG as ObserverLogger
-
-    Note over FO: Подключение сигналов в конструкторе:
-    Note over FO: fileChanged(path) -> OnFileChanged(path)
-    Note over FO: timeout() -> CheckFiles()
-
-    FSW-->>FO: fileChanged(path)
-    activate FO
-    FO->>FO: OnFileChanged(path)
-    FO->>FO: CheckFileChanges(path)
-    FO->>LOG: Log("Файл изменен")
-    deactivate FO
-
-    PT-->>FO: timeout()
-    activate FO
-    FO->>FO: CheckFiles()
-    loop Для каждого наблюдаемого файла
-        FO->>FO: CheckFileChanges(path)
-    end
-    FO->>LOG: Log("Состояние обновлено")
-    deactivate FO
+	LogEntryStream o-- ILogger
 ```
 
 ## Инструкция для пользователя
@@ -156,12 +146,12 @@ cmake .. && cmake --build .
 
 Запустите программу:
 ```powershell
-.\file_observer_project.exe --log-output=console
+.\file_observer_project.exe
 ```
 
-Логи в файлы:
+Логи в файлы (в указанную директорию):
 ```powershell
-.\file_observer_project.exe --log-output=file
+.\file_observer_project.exe --log-dir logs
 ```
 
 </details>
@@ -182,12 +172,12 @@ cmake --build .
 
 Запустите программу:
 ```bash
-./file_observer_project --log-output=console
+./file_observer_project
 ```
 
-Логи в файлы:
+Логи в файлы (в указанную директорию):
 ```bash
-./file_observer_project --log-output=file
+./file_observer_project --log-dir logs
 ```
 
 </details>
@@ -202,8 +192,9 @@ cmake --build .
 - `quit` — завершить работу программы.
 
 Параметры запуска:
-- `--log-output=console` — вывод логов в консоль;
-- `--log-output=file` — вывод логов в файлы `logs/app.log` и `logs/observer.log`.
+- без параметров — вывод логов в консоль;
+- `--log-dir <path>` или `--log-dir=<path>` — включить запись логов в файлы `app.log` и `observer.log` внутри указанной директории;
+- если путь не указан или директория не может быть создана, приложение автоматически возвращается к выводу в консоль.
 
 ## Тестирование
 Для проверки работы приложения используйте следующие сценарии:
@@ -217,4 +208,4 @@ cmake --build .
 - **Сценарий 7:** Добавление файла командой `add <path>` во время работы. Ожидается включение файла в мониторинг и вывод его состояния.
 - **Сценарий 8:** Удаление файла из мониторинга командой `remove <path>`. Ожидается прекращение уведомлений по этому файлу.
 - **Сценарий 9:** Ввод неизвестной команды. Ожидается сообщение об ошибке и подсказка использовать `help`.
-- **Сценарий 10:** Запуск с параметром `--log-output=file`. Ожидается запись событий в лог-файлы в директории `logs`.
+- **Сценарий 10:** Запуск с параметром `--log-dir logs`. Ожидается запись событий в лог-файлы `logs/app.log` и `logs/observer.log`.

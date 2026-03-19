@@ -6,9 +6,10 @@
 
 #include <ilogger.hpp>
 
+#include <memory>
+
 #include <QString>
 #include <QTextStream>
-#include <memory>
 
 namespace logger
 {

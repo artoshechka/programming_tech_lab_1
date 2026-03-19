@@ -11,52 +11,28 @@ namespace logger
 {
 namespace
 {
-LoggerOutputMode &GlobalOutputModeStorage()
+template <typename TLoggerImpl> std::shared_ptr<ILogger> CreateAndConfigureLogger(const QString &logPath)
 {
-    static LoggerOutputMode mode = LoggerOutputMode::Console;
-    return mode;
-}
-
-LogOutput ToLogOutput(LoggerOutputMode mode)
-{
-    return mode == LoggerOutputMode::File ? LogOutput::File : LogOutput::Console;
+    auto instance = std::make_shared<TLoggerImpl>();
+    instance->SetSettings(LoggerSettings(logPath, LogLevel::Debug, LogOutput::Console));
+    return instance;
 }
 } // namespace
 
-void SetGlobalLogOutput(LoggerOutputMode mode)
-{
-    GlobalOutputModeStorage() = mode;
-    GetAppLogger()->SetOutput(ToLogOutput(mode));
-    GetObserverLogger()->SetOutput(ToLogOutput(mode));
-}
-
-LoggerOutputMode GetGlobalLogOutput()
-{
-    return GlobalOutputModeStorage();
-}
-
-std::shared_ptr<ILogger> GetAppLogger()
+template <> std::shared_ptr<ILogger> GetLogger<AppLoggerTag>()
 {
     static std::shared_ptr<ILogger> logger = [] {
-        auto instance = std::make_shared<AppLogger>(ToLogOutput(GetGlobalLogOutput()));
-        instance->SetLogFile("logs/app.log");
-        return instance;
+        return CreateAndConfigureLogger<AppLogger>("logs/app.log");
     }();
-
-    logger->SetOutput(ToLogOutput(GetGlobalLogOutput()));
 
     return logger;
 }
 
-std::shared_ptr<ILogger> GetObserverLogger()
+template <> std::shared_ptr<ILogger> GetLogger<ObserverLoggerTag>()
 {
     static std::shared_ptr<ILogger> logger = [] {
-        auto instance = std::make_shared<ObserverLogger>(ToLogOutput(GetGlobalLogOutput()));
-        instance->SetLogFile("logs/observer.log");
-        return instance;
+        return CreateAndConfigureLogger<ObserverLogger>("logs/observer.log");
     }();
-
-    logger->SetOutput(ToLogOutput(GetGlobalLogOutput()));
 
     return logger;
 }

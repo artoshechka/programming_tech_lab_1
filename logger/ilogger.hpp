@@ -4,28 +4,13 @@
 #ifndef GUID_76731180_6258_4b6b_b2a7_4ef2b0039d4d
 #define GUID_76731180_6258_4b6b_b2a7_4ef2b0039d4d
 
+#include <log_levels.hpp>
+#include <log_settings.hpp>
+
 #include <QString>
 
 namespace logger
 {
-/// @brief Уровни логирования
-enum class LogLevel
-{
-    Trace,   ///< Трассировка
-    Debug,   ///< Отладка
-    Info,    ///< Информация
-    Warning, ///< Предупреждение
-    Error,   ///< Ошибка
-    Fatal    ///< Фатальная ошибка
-};
-
-/// @brief Режим вывода логов
-enum class LogOutput
-{
-    Console, ///< Вывод только в консоль
-    File     ///< Вывод только в файл
-};
-
 /// @brief Интерфейс логгера
 class ILogger
 {
@@ -33,17 +18,13 @@ class ILogger
     /// @brief Виртуальный деструктор интерфейса
     virtual ~ILogger() = default;
 
-    /// @brief Установить файл для записи логов
-    /// @param[in] filename Путь к файлу лога
-    virtual void SetLogFile(const QString &filename) = 0;
+    /// @brief Установить все настройки логгера одним вызовом
+    /// @param[in] settings Набор настроек логгера
+    virtual void SetSettings(const LoggerSettings &settings) = 0;
 
-    /// @brief Установить минимальный уровень логирования
-    /// @param[in] level Уровень логирования
-    virtual void SetLogLevel(LogLevel level) = 0;
-
-    /// @brief Установить канал вывода логов
-    /// @param[in] output Режим вывода
-    virtual void SetOutput(LogOutput output) = 0;
+    /// @brief Получить текущие настройки логгера
+    /// @return Текущие настройки
+    virtual LoggerSettings GetSettings() const = 0;
 
     /// @brief Записать сообщение в лог
     /// @param[in] level Уровень логирования

@@ -1,13 +1,14 @@
 cmake_minimum_required(VERSION 3.16)
+
 project(file_observer LANGUAGES CXX)
+
+find_package(QT NAMES Qt5 REQUIRED COMPONENTS Core)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 
 add_library(${PROJECT_NAME} STATIC
     file_observer.hpp
     src/file_observer.cpp
 )
-
-find_package(QT NAMES Qt5 REQUIRED COMPONENTS Core)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 
 target_include_directories(${PROJECT_NAME}
     PUBLIC
@@ -16,6 +17,6 @@ target_include_directories(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
     PUBLIC
-        Qt${QT_VERSION_MAJOR}::Core
         logger
+        Qt${QT_VERSION_MAJOR}::Core
 )
