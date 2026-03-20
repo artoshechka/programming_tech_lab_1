@@ -6,13 +6,11 @@
 #include <logger_macros.hpp>
 
 #include <cstdio>
-#include <optional>
 #ifdef _WIN32
 #include <thread>
 #endif
 
 #include <QCoreApplication>
-#include <QDir>
 #include <QSet>
 #include <QSocketNotifier>
 #include <QTextStream>
@@ -158,66 +156,9 @@ int main(int argc, char *argv[])
     auto appLogger = logger::GetLogger<logger::AppLoggerTag>();
     auto observerLogger = logger::GetLogger<logger::ObserverLoggerTag>();
 
-    bool logDirArgumentProvided = false;
-    std::optional<QString> logDirectoryPath;
-
-    const QStringList args = app.arguments();
-    for (int i = 1; i < args.size(); ++i)
-    {
-        const QString &arg = args.at(i);
-        if (arg.startsWith("--log-dir="))
-        {
-            logDirArgumentProvided = true;
-            const QString parsedPath = arg.mid(QString("--log-dir=").size()).trimmed();
-            if (!parsedPath.isEmpty())
-            {
-                logDirectoryPath = parsedPath;
-            }
-            break;
-        }
-
-        if (arg == "--log-dir")
-        {
-            logDirArgumentProvided = true;
-            if ((i + 1) < args.size())
-            {
-                const QString parsedPath = args.at(i + 1).trimmed();
-                if (!parsedPath.isEmpty())
-                {
-                    logDirectoryPath = parsedPath;
-                }
-            }
-            break;
-        }
-    }
-
-    logger::LogOutput outputMode = logger::LogOutput::Console;
-    QString appLogPath;
-    QString observerLogPath;
-
-    if (logDirectoryPath.has_value())
-    {
-        QDir directory;
-        if (directory.mkpath(logDirectoryPath.value()))
-        {
-            outputMode = logger::LogOutput::File;
-            QDir logDir(logDirectoryPath.value());
-            appLogPath = logDir.filePath("app.log");
-            observerLogPath = logDir.filePath("observer.log");
-            cout << "File logging enabled. Directory: " << logDirectoryPath.value() << "\n";
-        }
-        else
-        {
-            cout << "Cannot create log directory: " << logDirectoryPath.value() << ". Fallback to console logging.\n";
-        }
-    }
-    else if (logDirArgumentProvided)
-    {
-        cout << "Usage: --log-dir <path> or --log-dir=<path>. Fallback to console logging.\n";
-    }
-
-    const logger::LoggerSettings appLoggerSettings(appLogPath, logger::LogLevel::Debug, outputMode);
-    const logger::LoggerSettings observerLoggerSettings(observerLogPath, logger::LogLevel::Debug, outputMode);
+    const logger::LoggerSettings appLoggerSettings(QString(), logger::LogLevel::Debug, logger::LogOutput::Console);
+    const logger::LoggerSettings observerLoggerSettings(QString(), logger::LogLevel::Debug,
+                                                        logger::LogOutput::Console);
 
     appLogger->SetSettings(appLoggerSettings);
     observerLogger->SetSettings(observerLoggerSettings);
