@@ -11,7 +11,7 @@ namespace logger
 /// @brief Логгер состояния наблюдения файлов
 class ObserverLogger final : public ThreadSafeLogger
 {
-  public:
+   public:
     /// @brief Конструктор логгера наблюдения
     /// @param[in] output Режим вывода логов
     explicit ObserverLogger(LogOutput output = LogOutput::Console);
@@ -19,7 +19,7 @@ class ObserverLogger final : public ThreadSafeLogger
     /// @brief Деструктор логгера наблюдения
     ~ObserverLogger() override;
 
-  private:
+   private:
     /// @brief Сформировать сообщение для записи
     /// @param[in] level Уровень логирования
     /// @param[in] message Текст сообщения
@@ -27,10 +27,10 @@ class ObserverLogger final : public ThreadSafeLogger
     /// @param[in] line Номер строки
     /// @param[in] function Имя функции
     /// @return Отформатированное сообщение
-    QString FormatMessage(LogLevel level, const QString &message, const char *file, int line,
-                          const char *function) const override;
+    QString FormatMessage(LogLevel level, const QString& message, const char* file, int line,
+                          const char* function) const override;
 };
 
-} // namespace logger
+}  // namespace logger
 
-#endif // GUID_0710a4e6_d340_4b8f_8a3e_1134f49087ee
+#endif  // GUID_0710a4e6_d340_4b8f_8a3e_1134f49087ee

@@ -2,9 +2,8 @@
 /// @brief Определение логгера наблюдения за файлами
 /// @author Artemenko Anton
 
-#include <observer_logger.hpp>
-
 #include <QDateTime>
+#include <observer_logger.hpp>
 
 using logger::LogLevel;
 using logger::ObserverLogger;
@@ -15,8 +14,8 @@ ObserverLogger::ObserverLogger(LogOutput output) : ThreadSafeLogger("OBSERVER", 
 
 ObserverLogger::~ObserverLogger() = default;
 
-QString ObserverLogger::FormatMessage(LogLevel level, const QString &message, const char *file, int line,
-                                      const char *function) const
+QString ObserverLogger::FormatMessage(LogLevel level, const QString& message, const char* file, int line,
+                                      const char* function) const
 {
     Q_UNUSED(level);
     Q_UNUSED(file);
