@@ -156,11 +156,32 @@ int main(int argc, char *argv[])
     QTextStream cin(stdin);
     QTextStream cout(stdout);
 
+    QString observerLogPath;
+    QString appLogPath;
+
+    for (int i = 1; i < argc; ++i)
+    {
+        QString arg = QString::fromLocal8Bit(argv[i]);
+        if (arg.startsWith("--app-log-path="))
+        {
+            appLogPath = arg.mid(QString("--app-log-path=").length()).trimmed();
+        }
+        else if (arg.startsWith("--observer-log-path="))
+        {
+            observerLogPath = arg.mid(QString("--observer-log-path=").length()).trimmed();
+        }
+    }
+
     auto appLogger = logger::GetLogger<logger::AppLoggerTag>();
     auto observerLogger = logger::GetLogger<logger::ObserverLoggerTag>();
 
-    const logger::LoggerSettings appLoggerSettings(QString(), logger::LogLevel::Debug, logger::LogOutput::Console);
-    const logger::LoggerSettings observerLoggerSettings(QString(), logger::LogLevel::Debug, logger::LogOutput::Console);
+    const logger::LoggerSettings appLoggerSettings(
+        appLogPath.isEmpty() ? QString() : appLogPath, logger::LogLevel::Debug,
+        appLogPath.isEmpty() ? logger::LogOutput::Console : logger::LogOutput::File);
+
+    const logger::LoggerSettings observerLoggerSettings(
+        observerLogPath.isEmpty() ? QString() : observerLogPath, logger::LogLevel::Debug,
+        observerLogPath.isEmpty() ? logger::LogOutput::Console : logger::LogOutput::File);
 
     appLogger->SetSettings(appLoggerSettings);
     observerLogger->SetSettings(observerLoggerSettings);
