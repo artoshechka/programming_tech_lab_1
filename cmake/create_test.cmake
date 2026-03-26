@@ -1,6 +1,6 @@
 # Creates an EXCLUDE_FROM_ALL gtest binary and registers it in ctest and the aggregate target.
 function(create_test target_name)
-    if(NOT RECURSIVE_ENCODER_BUILD_TESTS)
+    if(NOT FILE_OBSERVER_BUILD_TESTS)
         return()
     endif()
 

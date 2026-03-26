@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 3.16)
 
 project(file_observer_project LANGUAGES CXX)
 
-option(RECURSIVE_ENCODER_BUILD_TESTS "Build unit tests" OFF)
+option(FILE_OBSERVER_BUILD_TESTS "Build unit tests" OFF)
 
 include(${CMAKE_SOURCE_DIR}/cmake/create_test.cmake)
 
-if(RECURSIVE_ENCODER_BUILD_TESTS)
+if(FILE_OBSERVER_BUILD_TESTS)
     include(CTest)
 endif()
 set(CMAKE_CXX_STANDARD 17)
@@ -37,7 +37,7 @@ target_link_libraries(${PROJECT_NAME}
         Qt${QT_VERSION_MAJOR}::Core
 )
 
-if(RECURSIVE_ENCODER_BUILD_TESTS)
+if(FILE_OBSERVER_BUILD_TESTS)
   get_property(FILE_OBSERVER_TEST_TARGETS GLOBAL PROPERTY FILE_OBSERVER_TEST_TARGETS)
   if(FILE_OBSERVER_TEST_TARGETS)
     add_custom_target(build_tests DEPENDS ${FILE_OBSERVER_TEST_TARGETS})
