@@ -86,3 +86,8 @@ void FileObserver::CheckFileChanges(const QString& filePath)
     previous.exists_ = existsNow;
     previous.size_ = sizeNow;
 }
+
+QStringList FileObserver::ListAllFiles() const
+{
+    return fileContainer_.keys();
+}

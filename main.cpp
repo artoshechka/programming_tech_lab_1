@@ -94,8 +94,19 @@ void ProcessConsoleCommand(const QString& line, QTextStream& cout, QSet<QString>
         PrintHelp(cout);
     } else if (trimmedLine.toLower() == "list")
     {
-        // TODO:пусть список хранить сам обсервер
-        PrintObservedPaths(observedPaths, cout);
+        const auto files = observer->ListAllFiles();
+        if (files.isEmpty())
+        {
+            cout << "No files are monitored.\n";
+        } else
+        {
+            cout << "Monitored files:\n";
+            for (const auto& path : files)
+            {
+                cout << "  " << path << "\n";
+            }
+        }
+        cout.flush();
     } else if (trimmedLine.toLower() == "quit" || trimmedLine.toLower() == "exit")
     {
         LogInfo(appLogger) << "Monitoring stopped by user command.";

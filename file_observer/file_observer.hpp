@@ -42,6 +42,10 @@ class FileObserver : public QObject
     /// @param[in] filePath Путь к файлу
     void RemoveFile(const QString& filePath);
 
+    /// @brief Получить список всех наблюдаемых файлов
+    /// @return Список путей к наблюдаемым файлам
+    QStringList ListAllFiles() const;
+
    private:
     /// @brief Проверить изменения в файле
     /// @param[in] filePath Путь к файлу
@@ -50,7 +54,6 @@ class FileObserver : public QObject
    private slots:
     /// @brief Проверить состояние всех файлов
     void CheckFiles();
-
 
    private:
     QTimer pollTimer_;                                 ///< Таймер периодической проверки существования/размера
