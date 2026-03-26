@@ -173,8 +173,8 @@ int main(int argc, char* argv[])
         }
     }
 
-    auto appLogger = logger::GetLogger<logger::AppLoggerTag>();
-    auto observerLogger = logger::GetLogger<logger::ObserverLoggerTag>();
+    auto appLogger = logger::GetLogger<logger::AppSysLoggerTag>();
+    auto observerLogger = logger::GetLogger<logger::AppLoggerTag>();
 
     const logger::LoggerSettings appLoggerSettings(
         appLogPath.isEmpty() ? QString() : appLogPath, logger::LogLevel::Debug,
