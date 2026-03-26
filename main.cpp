@@ -5,10 +5,9 @@
 #include <logger_factory.hpp>
 #include <logger_macros.hpp>
 
+#include <atomic>
 #include <cstdio>
-#ifdef _WIN32
 #include <thread>
-#endif
 
 #include <QCoreApplication>
 #include <QSet>
@@ -80,9 +79,11 @@ void PrintObservedPaths(const QSet<QString> &observedPaths, QTextStream &cout)
 /// @param[in] observer объект наблюдателя файлов
 /// @param[in] appLogger логгер приложения
 /// @param[in,out] app экземпляр приложения для завершения по команде `quit`
+/// @param[in,out] shouldExit флаг для остановки потока консоли
 void ProcessConsoleCommand(const QString &line, QTextStream &cout, QSet<QString> &observedPaths,
                            const std::shared_ptr<file_observer::FileObserver> &observer,
-                           const std::shared_ptr<logger::ILogger> &appLogger, QCoreApplication &app)
+                           const std::shared_ptr<logger::ILogger> &appLogger, QCoreApplication &app,
+                           std::atomic<bool> &shouldExit)
 {
     const QString trimmedLine = line.trimmed();
     if (trimmedLine.isEmpty())
@@ -90,20 +91,22 @@ void ProcessConsoleCommand(const QString &line, QTextStream &cout, QSet<QString>
         return;
     }
 
-    if (trimmedLine == "help")
+    if (trimmedLine.toLower() == "help")
     {
         PrintHelp(cout);
     }
-    else if (trimmedLine == "list")
+    else if (trimmedLine.toLower() == "list")
     {
+        // TODO:пусть список хранить сам обсервер
         PrintObservedPaths(observedPaths, cout);
     }
-    else if (trimmedLine == "quit" || trimmedLine == "exit")
+    else if (trimmedLine.toLower() == "quit" || trimmedLine.toLower() == "exit")
     {
         LogInfo(appLogger) << "Monitoring stopped by user command.";
-        app.quit();
+        shouldExit = true;
+        app.exit();
     }
-    else if (trimmedLine == "add" || trimmedLine.startsWith("add "))
+    else if (trimmedLine.toLower() == "add" || trimmedLine.startsWith("add "))
     {
         const QString commandPath = trimmedLine.mid(4).trimmed();
         if (commandPath.isEmpty())
@@ -117,7 +120,7 @@ void ProcessConsoleCommand(const QString &line, QTextStream &cout, QSet<QString>
             LogInfo(appLogger) << "Added file to monitoring: " << commandPath;
         }
     }
-    else if (trimmedLine == "remove" || trimmedLine.startsWith("remove "))
+    else if (trimmedLine.toLower() == "remove" || trimmedLine.startsWith("remove "))
     {
         const QString commandPath = trimmedLine.mid(7).trimmed();
         if (commandPath.isEmpty())
@@ -157,13 +160,12 @@ int main(int argc, char *argv[])
     auto observerLogger = logger::GetLogger<logger::ObserverLoggerTag>();
 
     const logger::LoggerSettings appLoggerSettings(QString(), logger::LogLevel::Debug, logger::LogOutput::Console);
-    const logger::LoggerSettings observerLoggerSettings(QString(), logger::LogLevel::Debug,
-                                                        logger::LogOutput::Console);
+    const logger::LoggerSettings observerLoggerSettings(QString(), logger::LogLevel::Debug, logger::LogOutput::Console);
 
     appLogger->SetSettings(appLoggerSettings);
     observerLogger->SetSettings(observerLoggerSettings);
 
-    auto observer = std::make_shared<file_observer::FileObserver>(observerLogger);
+    const auto observer = std::make_shared<file_observer::FileObserver>(observerLogger);
     QSet<QString> observedPaths;
     const QVector<QString> paths = ReadInitialPaths(cin, cout);
 
@@ -176,7 +178,7 @@ int main(int argc, char *argv[])
 
     if (observedPaths.isEmpty())
     {
-        cout << "No files were added. Use command: add <path>\n";
+        cout << "No files were added! Use command: add <path>\n";
     }
 
     cout << "Monitoring started\n";
@@ -186,25 +188,47 @@ int main(int argc, char *argv[])
 
     LogInfo(appLogger) << "Monitoring started. Initial files count: " << observedPaths.size();
 
-#ifdef _WIN32
+    std::atomic<bool> shouldExit{false};
+
     std::thread consoleThread([&]() {
-        while (true)
+        while (!shouldExit)
         {
-            const QString line = cin.readLine();
-            QMetaObject::invokeMethod(
-                &app, [&, line]() { ProcessConsoleCommand(line, cout, observedPaths, observer, appLogger, app); },
-                Qt::QueuedConnection);
+            QString line;
+            try
+            {
+                line = cin.readLine();
+                if (line.isNull() && shouldExit)
+                {
+                    break;
+                }
+
+                QMetaObject::invokeMethod(
+                    &app,
+                    [&, line]() {
+                        ProcessConsoleCommand(line, cout, observedPaths, observer, appLogger, app, shouldExit);
+                    },
+                    Qt::QueuedConnection);
+            }
+            catch (const std::exception &e)
+            {
+                LogError(appLogger) << "Unexpected error occurred: " << e.what();
+                break;
+            }
+            catch (...)
+            {
+                LogError(appLogger) << "Unknown error occurred";
+                break;
+            }
         }
     });
 
-    consoleThread.detach();
-#else
-    auto stdinNotifier = std::make_shared<QSocketNotifier>(fileno(stdin), QSocketNotifier::Read);
-    QObject::connect(stdinNotifier.get(), &QSocketNotifier::activated, &app, [&, observer, appLogger]() {
-        const QString line = cin.readLine();
-        ProcessConsoleCommand(line, cout, observedPaths, observer, appLogger, app);
-    });
-#endif
+    int result = app.exec();
 
-    return app.exec();
+    shouldExit = true;
+    if (consoleThread.joinable())
+    {
+        consoleThread.join();
+    }
+
+    return result;
 }
