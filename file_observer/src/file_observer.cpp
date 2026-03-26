@@ -16,7 +16,6 @@ file_observer::ObservedFileState::ObservedFileState(bool existsState, qint64 siz
 FileObserver::FileObserver(std::shared_ptr<logger::ILogger> observerLogger, QObject* parent)
     : QObject(parent), observerLogger_(std::move(observerLogger))
 {
-    connect(&systemWatcher_, &QFileSystemWatcher::fileChanged, this, &FileObserver::OnFileChanged);
     connect(&pollTimer_, &QTimer::timeout, this, &FileObserver::CheckFiles);
     pollTimer_.start(1000);
 }
@@ -26,50 +25,24 @@ void FileObserver::AddFile(const QString& filePath)
     if (filePath.isEmpty()) return;
 
     QFileInfo currentInfo(filePath);
-    // Сохраняем инвертированное состояние, чтобы первая проверка дала начальное уведомление.
-    fileContainer_[filePath] = file_observer::ObservedFileState(!currentInfo.exists(), 0);
 
-    if (currentInfo.exists() && !systemWatcher_.files().contains(filePath))
-    {
-        systemWatcher_.addPath(filePath);
-    }
+    fileContainer_[filePath] = file_observer::ObservedFileState(!currentInfo.exists(), 0);
 
     CheckFileChanges(filePath);
 }
 
 void FileObserver::RemoveFile(const QString& filePath)
 {
-    if (systemWatcher_.files().contains(filePath))
-    {
-        systemWatcher_.removePath(filePath);
-    }
     fileContainer_.remove(filePath);
 }
 
-FileObserver::~FileObserver()
-{
-    if (!systemWatcher_.files().isEmpty())
-    {
-        systemWatcher_.removePaths(systemWatcher_.files());
-    }
-}
+FileObserver::~FileObserver() = default;
 
 void FileObserver::CheckFiles()
 {
     for (auto it = fileContainer_.cbegin(); it != fileContainer_.cend(); ++it)
     {
         CheckFileChanges(it.key());
-    }
-}
-
-void FileObserver::OnFileChanged(const QString& path)
-{
-    CheckFileChanges(path);
-
-    QFileInfo info(path);
-    if (info.exists() && !systemWatcher_.files().contains(path))
-    {
-        systemWatcher_.addPath(path);
     }
 }
 
@@ -112,9 +85,4 @@ void FileObserver::CheckFileChanges(const QString& filePath)
 
     previous.exists_ = existsNow;
     previous.size_ = sizeNow;
-
-    if (!existsNow && systemWatcher_.files().contains(filePath))
-    {
-        systemWatcher_.removePath(filePath);
-    }
 }

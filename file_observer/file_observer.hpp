@@ -2,7 +2,6 @@
 /// @brief Объявление класса, ответственного за мониторинг директорий
 /// @author Artemenko Anton
 #include <QFileInfo>
-#include <QFileSystemWatcher>
 #include <QHash>
 #include <QObject>
 #include <QString>
@@ -52,11 +51,8 @@ class FileObserver : public QObject
     /// @brief Проверить состояние всех файлов
     void CheckFiles();
 
-    /// @brief Обработчик изменения файла
-    void OnFileChanged(const QString& path);
 
    private:
-    QFileSystemWatcher systemWatcher_;                 ///< Наблюдатель за файловой системой
     QTimer pollTimer_;                                 ///< Таймер периодической проверки существования/размера
     ObservingFileContainer fileContainer_;             ///< Контейнер наблюдаемых файлов
     std::shared_ptr<logger::ILogger> observerLogger_;  ///< Логгер событий наблюдения
