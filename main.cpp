@@ -9,6 +9,7 @@
 #include <atomic>
 #include <cstdio>
 #include <file_observer.hpp>
+#include <file_watcher_factory.hpp>
 #include <logger_factory.hpp>
 #include <logger_macros.hpp>
 #include <thread>
@@ -17,7 +18,7 @@ namespace
 {
 /// @brief Выводит список доступных команд интерактивной консоли.
 /// @param[in,out] cout поток вывода в консоль
-void PrintHelp(QTextStream& cout)
+void PrintHelp(QTextStream &cout)
 {
     cout << "Commands:\n";
     cout << "  add <path>    - add file to monitoring\n";
@@ -30,7 +31,7 @@ void PrintHelp(QTextStream& cout)
 /// @param[in,out] cin поток ввода из консоли
 /// @param[in,out] cout поток вывода в консоль
 /// @return список путей, введенных пользователем
-QVector<QString> ReadInitialPaths(QTextStream& cin, QTextStream& cout)
+QVector<QString> ReadInitialPaths(QTextStream &cin, QTextStream &cout)
 {
     QVector<QString> paths;
 
@@ -52,36 +53,17 @@ QVector<QString> ReadInitialPaths(QTextStream& cin, QTextStream& cout)
     return paths;
 }
 
-/// @brief Выводит текущий список наблюдаемых файлов.
-/// @param[in] observedPaths множество наблюдаемых путей
-/// @param[in,out] cout поток вывода в консоль
-void PrintObservedPaths(const QSet<QString>& observedPaths, QTextStream& cout)
-{
-    if (observedPaths.isEmpty())
-    {
-        cout << "No files are monitored.\n";
-        return;
-    }
-
-    cout << "Monitored files:\n";
-    for (const auto& path : observedPaths)
-    {
-        cout << "  " << path << "\n";
-    }
-}
-
 /// @brief Обрабатывает одну команду, введенную пользователем в консоли.
 /// @param[in] line исходная строка команды
 /// @param[in,out] cout поток вывода в консоль
-/// @param[in,out] observedPaths множество наблюдаемых путей
 /// @param[in] observer объект наблюдателя файлов
 /// @param[in] appLogger логгер приложения
 /// @param[in,out] app экземпляр приложения для завершения по команде `quit`
 /// @param[in,out] shouldExit флаг для остановки потока консоли
-void ProcessConsoleCommand(const QString& line, QTextStream& cout, QSet<QString>& observedPaths,
-                           const std::shared_ptr<file_observer::FileObserver>& observer,
-                           const std::shared_ptr<logger::ILogger>& appLogger, QCoreApplication& app,
-                           std::atomic<bool>& shouldExit)
+void ProcessConsoleCommand(const QString &line, QTextStream &cout,
+                           const std::shared_ptr<file_observer::FileObserver> &observer,
+                           const std::shared_ptr<logger::ILogger> &appLogger, QCoreApplication &app,
+                           std::atomic<bool> &shouldExit)
 {
     const QString trimmedLine = line.trimmed();
     if (trimmedLine.isEmpty())
@@ -92,66 +74,71 @@ void ProcessConsoleCommand(const QString& line, QTextStream& cout, QSet<QString>
     if (trimmedLine.toLower() == "help")
     {
         PrintHelp(cout);
-    } else if (trimmedLine.toLower() == "list")
+    }
+    else if (trimmedLine.toLower() == "list")
     {
         const auto files = observer->ListAllFiles();
         if (files.isEmpty())
         {
-            cout << "No files are monitored.\n";
-        } else
+            LogInfo(appLogger) << "No files are monitored.";
+        }
+        else
         {
-            cout << "Monitored files:\n";
-            for (const auto& path : files)
+            LogInfo(appLogger) << "Monitored files:";
+            for (const auto &path : files)
             {
-                cout << "  " << path << "\n";
+                LogInfo(appLogger) << "  " << path;
             }
         }
         cout.flush();
-    } else if (trimmedLine.toLower() == "quit" || trimmedLine.toLower() == "exit")
+    }
+    else if (trimmedLine.toLower() == "quit" || trimmedLine.toLower() == "exit")
     {
         LogInfo(appLogger) << "Monitoring stopped by user command.";
         shouldExit = true;
         app.exit();
-    } else if (trimmedLine.toLower() == "add" || trimmedLine.startsWith("add "))
+    }
+    else if (trimmedLine.toLower() == "add" || trimmedLine.startsWith("add "))
     {
         const QString commandPath = trimmedLine.mid(4).trimmed();
         if (commandPath.isEmpty())
         {
             cout << "Usage: add <path>\n";
-        } else
+        }
+        else
         {
             observer->AddFile(commandPath);
-            observedPaths.insert(commandPath);
             LogInfo(appLogger) << "Added file to monitoring: " << commandPath;
         }
-    } else if (trimmedLine.toLower() == "remove" || trimmedLine.startsWith("remove "))
+    }
+    else if (trimmedLine.toLower() == "remove" || trimmedLine.startsWith("remove "))
     {
         const QString commandPath = trimmedLine.mid(7).trimmed();
         if (commandPath.isEmpty())
         {
             cout << "Usage: remove <path>\n";
-        } else
+        }
+        else
         {
             observer->RemoveFile(commandPath);
-            observedPaths.remove(commandPath);
             LogInfo(appLogger) << "Removed file from monitoring: " << commandPath;
         }
-    } else
+    }
+    else
     {
-        cout << "Unknown command: " << trimmedLine << "\n";
-        cout << "Type 'help' to see available commands.\n";
-        LogWarning(appLogger) << "Unknown console command: " << trimmedLine;
+        LogWarning(appLogger) << "Unknown console command: " << trimmedLine
+                              << ". Type 'help' to see available commands.";
     }
 
     cout.flush();
 }
-}  // namespace
+} // namespace
 
 /// @brief Точка входа в программу.
 /// @param[in] argc количество аргументов командной строки
 /// @param[in] argv массив аргументов командной строки
 /// @return код завершения приложения
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
 
@@ -167,7 +154,8 @@ int main(int argc, char* argv[])
         if (arg.startsWith("--app-log-path="))
         {
             appLogPath = arg.mid(QString("--app-log-path=").length()).trimmed();
-        } else if (arg.startsWith("--observer-log-path="))
+        }
+        else if (arg.startsWith("--observer-log-path="))
         {
             observerLogPath = arg.mid(QString("--observer-log-path=").length()).trimmed();
         }
@@ -187,28 +175,19 @@ int main(int argc, char* argv[])
     appLogger->SetSettings(appLoggerSettings);
     observerLogger->SetSettings(observerLoggerSettings);
 
-    const auto observer = std::make_shared<file_observer::FileObserver>(observerLogger);
-    QSet<QString> observedPaths;
+    const auto watcher = file_observer::CreateFileWatcher<file_observer::PollingWatcherTag>(observerLogger);
+    const auto observer = std::make_shared<file_observer::FileObserver>(watcher, observerLogger);
+
     const QVector<QString> paths = ReadInitialPaths(cin, cout);
 
-    for (const auto& path : paths)
+    for (const auto &path : paths)
     {
         observer->AddFile(path);
-        observedPaths.insert(path);
         LogInfo(appLogger) << "Added file to monitoring: " << path;
     }
 
-    if (observedPaths.isEmpty())
-    {
-        cout << "No files were added! Use command: add <path>\n";
-    }
-
-    cout << "Monitoring started\n";
-    cout << "Commands: add <path>, remove <path>, list, help, quit\n";
-    cout << "Type command and press Enter.\n";
-    cout.flush();
-
-    LogInfo(appLogger) << "Monitoring started. Initial files count: " << observedPaths.size();
+    LogInfo(appLogger) << "Monitoring started";
+    LogInfo(appLogger) << "Commands: add <path>, remove <path>, list, help, quit";
 
     std::atomic<bool> shouldExit{false};
 
@@ -225,16 +204,15 @@ int main(int argc, char* argv[])
                 }
 
                 QMetaObject::invokeMethod(
-                    &app,
-                    [&, line]() {
-                        ProcessConsoleCommand(line, cout, observedPaths, observer, appLogger, app, shouldExit);
-                    },
+                    &app, [&, line]() { ProcessConsoleCommand(line, cout, observer, appLogger, app, shouldExit); },
                     Qt::QueuedConnection);
-            } catch (const std::exception& e)
+            }
+            catch (const std::exception &e)
             {
                 LogError(appLogger) << "Unexpected error occurred: " << e.what();
                 break;
-            } catch (...)
+            }
+            catch (...)
             {
                 LogError(appLogger) << "Unknown error occurred";
                 break;

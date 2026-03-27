@@ -1,65 +1,60 @@
 /// @file
 /// @brief Объявление класса, ответственного за мониторинг директорий
 /// @author Artemenko Anton
-#include <QFileInfo>
-#include <QHash>
-#include <QObject>
-#include <QString>
-#include <QTimer>
-#include <ilogger.hpp>
-#include <memory>
 
 #ifndef GUID_f2735f4b_5fd5_444d_b275_684e413b6822
 #define GUID_f2735f4b_5fd5_444d_b275_684e413b6822
+
+#include <QObject>
+#include <ifile_watcher.hpp>
+#include <ilogger.hpp>
+#include <memory>
+
 namespace file_observer
 {
-/// @brief Состояние наблюдаемого файла
-struct ObservedFileState
-{
-    ObservedFileState(bool existsState = false, qint64 sizeState = 0);
 
-    bool exists_;  ///< Признак существования файла
-    qint64 size_;  ///< Последний известный размер файла
-};
-
-/// @brief Контейнер для хранения информации о наблюдаемых файлах
-using ObservingFileContainer = QHash<QString, ObservedFileState>;
-
-/// @brief Класс, ответственный за мониторинг
+/// @brief Класс-наблюдатель, агрегирующий IFileWatcher
 class FileObserver : public QObject
 {
     Q_OBJECT
-
    public:
-    explicit FileObserver(std::shared_ptr<logger::ILogger> observerLogger, QObject* parent = nullptr);
+    /// @brief Конструктор
+    /// @param[in] watcher Реализация наблюдателя (передаётся во владение)
+    /// @param[in] logger Логгер
+    explicit FileObserver(std::shared_ptr<IFileWatcher> watcher, std::shared_ptr<logger::ILogger> logger,
+                          QObject* parent = nullptr);
+
+    /// @brief Деструктор
     ~FileObserver();
 
-    /// @brief Добавить файл для наблюдения
-    /// @param[in] filePath Путь к файлу
-    void AddFile(const QString& filePath);
+    /// @brief Добавить файл
+    void AddFile(const QString& path);
 
-    /// @brief Удалить файл из наблюдения
-    /// @param[in] filePath Путь к файлу
-    void RemoveFile(const QString& filePath);
+    /// @brief Удалить файл
+    void RemoveFile(const QString& path);
 
-    /// @brief Получить список всех наблюдаемых файлов
-    /// @return Список путей к наблюдаемым файлам
+    /// @brief Получить список файлов
     QStringList ListAllFiles() const;
 
-   private:
-    /// @brief Проверить изменения в файле
-    /// @param[in] filePath Путь к файлу
-    void CheckFileChanges(const QString& filePath);
-
    private slots:
-    /// @brief Проверить состояние всех файлов
-    void CheckFiles();
+    /// @brief Файл был изменён
+    /// @param[in] path Путь к файлу
+    /// @param[in] size Размер файл
+    void OnFileChanged(const QString& path, qint64 size);
+
+    /// @brief Файл был создан
+    /// @param[in] path Путь к файлу
+    void OnFileCreated(const QString& path);
+
+    /// @brief Файл был удалён
+    /// @param[in] path Путь к файлу
+    void OnFileRemoved(const QString& path);
 
    private:
-    QTimer pollTimer_;                                 ///< Таймер периодической проверки существования/размера
-    ObservingFileContainer fileContainer_;             ///< Контейнер наблюдаемых файлов
-    std::shared_ptr<logger::ILogger> observerLogger_;  ///< Логгер событий наблюдения
+    std::shared_ptr<IFileWatcher> watcher_;    ///< наблюдатель за файлами
+    std::shared_ptr<logger::ILogger> logger_;  ///< Логгер
 };
 
 }  // namespace file_observer
+
 #endif  // GUID_f2735f4b_5fd5_444d_b275_684e413b6822
