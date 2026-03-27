@@ -194,3 +194,61 @@ cmake --build .
 - **Сценарий 8:** Удаление файла из мониторинга командой `remove <path>`. Ожидается прекращение уведомлений по этому файлу.
 - **Сценарий 9:** Ввод неизвестной команды. Ожидается сообщение об ошибке и подсказка использовать `help`.
 - **Сценарий 10:** Запуск приложения с дополнительными параметрами. Ожидается, что приложение продолжает работать с выводом логов только в консоль.
+
+### Unit-тесты (GoogleTest)
+
+Сборка и запуск unit-тестов:
+
+```bash
+cmake -S . -B build -DFILE_OBSERVER_BUILD_TESTS=ON
+cmake --build build --target build_tests --parallel
+ctest --test-dir build --output-on-failure
+```
+
+### Генерация отчета о покрытии
+
+Ниже последовательность полного цикла: чистая coverage-сборка, сборка приложения и тестов,
+прогон тестов и генерация HTML-отчета покрытия только по исходникам .cpp проекта.
+
+```bash
+rm -rf build-coverage
+cmake -S . -B build-coverage -DFILE_OBSERVER_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage -O0 -g"
+cmake --build build-coverage --target file_observer_project build_tests --parallel
+ctest --test-dir build-coverage --output-on-failure
+
+if command -v llvm-cov >/dev/null 2>&1; then
+    GCOV_EXEC="$(command -v llvm-cov) gcov"
+elif command -v xcrun >/dev/null 2>&1 && xcrun --find llvm-cov >/dev/null 2>&1; then
+    GCOV_EXEC="$(xcrun --find llvm-cov) gcov"
+else
+    GCOV_EXEC="gcov"
+fi
+
+cd build-coverage
+rm -f coverage_cpp*
+find . -name '*.gcov' -delete
+gcovr -r .. \
+    --gcov-executable "$GCOV_EXEC" \
+    --filter ".*/(file_observer/src/.*\.cpp|logger/src/.*\.cpp)$" \
+    --exclude ".*main\.cpp$" \
+    --exclude ".*/test/.*" \
+    --exclude ".*/CMakeFiles/.*" \
+    --exclude ".*/build-coverage/.*" \
+    --exclude ".*CMakeCXXCompilerId\.cpp$" \
+    --exclude ".*\.hpp$" \
+    --html-details coverage_cpp.html
+```
+
+Открыть отчет:
+
+```bash
+open build-coverage/coverage_cpp.html
+```
+
+## Форматирование кода
+
+Для автоматического форматирования всех исходных файлов используйте команду:
+
+```bash
+find . -name "*.cpp" -o -name "*.hpp" | grep -v "/build/" | xargs clang-format -i
+```
