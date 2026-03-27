@@ -128,7 +128,8 @@ classDiagram
 	main ..> ThreadSafeLogger 
 	main ..> IFileWatcher 
 ```
-
+### Диаграмма слотов и сигналов
+![signal_slot_diag](doc/diagramm/signal_slot_diag.svg)
 ## Инструкция для пользователя
 Сборка и запуск зависят от операционной системы.
 
