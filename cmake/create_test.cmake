@@ -10,6 +10,7 @@ function(create_test target_name)
 
     if(NOT TARGET GTest::gtest_main)
         find_package(GTest REQUIRED)
+        find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Test)
         include(GoogleTest)
     endif()
 
