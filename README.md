@@ -29,7 +29,7 @@
 
 Основные компоненты решения:
 - **FileObserver** — класс, отвечающий за наблюдение за файлами. Хранит текущее состояние каждого отслеживаемого файла, проверяет факт существования и размер.
-- **QFileSystemWatcher** — используется для получения событий изменения файловой системы.
+- **IFileWatcher / PollingFileWatcher** — абстракция и реализация механизма отслеживания изменений файлов.
 - **QTimer** — выполняет периодическую проверку файлов, чтобы фиксировать удаление, повторное появление файла и изменение размера.
 - **ILogger / AppLogger / ObserverLogger** — подсистема логирования для вывода сообщений приложения и событий наблюдения в консоль или файл.
 
@@ -37,86 +37,107 @@
 
 ```mermaid
 classDiagram
-	class ObservedFileState {
-		+ObservedFileState(bool existsState=false, qint64 sizeState=0)
-		+bool exists_
-		+qint64 size_
+	class main {
+		+int main(argc, argv)
 	}
 
-	class LoggerSettings {
-		+LoggerSettings(logFilePath, logLevel, output)
-		+logFilePath_
-		+logLevel_
-		+output_
+		class FileObserver {
+			+FileObserver(watcher, logger, parent)
+			+~FileObserver()
+			+AddFile(path)
+			+RemoveFile(path)
+			+ListAllFiles()
+			+OnFileChanged(path, size) <<slot>>
+			+OnFileCreated(path) <<slot>>
+			+OnFileRemoved(path) <<slot>>
+		}
+		class IFileWatcher {
+			+IFileWatcher(parent)
+			+~IFileWatcher()
+			+AddFile(path)
+			+RemoveFile(path)
+			+ListFiles()
+			+fileChanged(path, size) <<signal>>
+			+fileCreated(path) <<signal>>
+			+fileRemoved(path) <<signal>>
+		}
+		class PollingFileWatcher {
+			+PollingFileWatcher(intervalMs, logger, parent)
+			+~PollingFileWatcher()
+			+AddFile(path)
+			+RemoveFile(path)
+			+ListFiles()
+		}
+		class ObservedFileState {
+			+ObservedFileState(existsState, sizeState)
+			+bool exists_
+			+qint64 size_
+		}
+		class FileWatcherFactory {
+			+CreateFileWatcher<TWatcherTag>(logger)
+		}
+
+		class ILogger {
+			<<interface>>
+			+SetSettings(settings)
+			+GetSettings()
+			+Log(level, message, file, line, function)
+		}
+		class ThreadSafeLogger {
+			+ThreadSafeLogger(componentName, output)
+			+~ThreadSafeLogger()
+			+SetSettings(settings)
+			+GetSettings()
+			+Log(level, message, file, line, function)
+		}
+		class AppLogger {
+			+AppLogger(output)
+			+~AppLogger()
+		}
+		class AppSysLogger {
+			+AppSysLogger(output)
+			+~AppSysLogger()
+		}
+		class LoggerSettings {
+			+LoggerSettings(logFilePath, logLevel, output)
+			+logFilePath_
+			+logLevel_
+			+output_
+		}
+		class LogEntryStream {
+			+LogEntryStream(logger, level, file, line, function)
+			+~LogEntryStream()
+		}
+		class LoggerFactory {
+			+GetLogger<TLoggerTag>()
 	}
 
-	class ILogger {
-		<<interface>>
-		+SetSettings(settings)
-		+GetSettings()
-		+Log(level, message, file, line, function)
-	}
-
-	class ThreadSafeLogger {
-		#componentName_
-		-logFile_
-		-textStream_
-		-syncMutex_
-		-settings_
-		+ThreadSafeLogger(componentName, output)
-		+~ThreadSafeLogger()
-		+SetSettings(settings)
-		+GetSettings()
-		+Log(level, message, file, line, function)
-		#FormatMessage(level, message, file, line, function)
-		#LogLevelToString(level)
-	}
-
-	class AppLogger {
-		+AppLogger(output)
-		+~AppLogger()
-		+FormatMessage(level, message, file, line, function)
-	}
-
-	class ObserverLogger {
-		+ObserverLogger(output)
-		+~ObserverLogger()
-		+FormatMessage(level, message, file, line, function)
-	}
-
-	class LogEntryStream {
-		-logger_
-		-level_
-		-file_
-		-line_
-		-function_
-		-message_
-		-stream_
-		+LogEntryStream(logger, level, file, line, function)
-		+~LogEntryStream()
-	}
-
-	class FileObserver {
-		-systemWatcher_
-		-pollTimer_
-		-fileContainer_
-		-observerLogger_
-		+FileObserver(observerLogger, parent)
-		+~FileObserver()
-		+AddFile(filePath)
-		+RemoveFile(filePath)
-		-CheckFileChanges(filePath)
-		-CheckFiles()
-		-OnFileChanged(path)
-	}
-
-	ILogger <|.. ThreadSafeLogger
-	ThreadSafeLogger <|-- AppLogger
-	ThreadSafeLogger <|-- ObserverLogger
-	ThreadSafeLogger *-- LoggerSettings
-	FileObserver *-- ObservedFileState
+	PollingFileWatcher --|> IFileWatcher
+	FileObserver o-- IFileWatcher
 	FileObserver o-- ILogger
+	FileObserver *-- ObservedFileState
+	ThreadSafeLogger --|> ILogger
+	AppLogger --|> ThreadSafeLogger
+	AppSysLogger --|> ThreadSafeLogger
+	ThreadSafeLogger *-- LoggerSettings
 	LogEntryStream o-- ILogger
+ 
+	FileWatcherFactory ..> IFileWatcher 
+	LoggerFactory ..> ILogger 
+
+	main ..> FileObserver 
+	main ..> FileWatcherFactory 
+	main ..> LoggerFactory 
+	main ..> LoggerSettings 
+	main ..> LogEntryStream 
+	main ..> AppLogger 
+	main ..> AppSysLogger 
+	main ..> ThreadSafeLogger 
+	main ..> IFileWatcher 
+
+	IFileWatcher ..> FileObserver : fileChanged --> OnFileChanged
+	IFileWatcher ..> FileObserver : fileCreated --> OnFileCreated
+	IFileWatcher ..> FileObserver : fileRemoved --> OnFileRemoved
 ```
 
 ## Инструкция для пользователя
