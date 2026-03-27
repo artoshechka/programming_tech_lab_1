@@ -9,6 +9,7 @@
 #include <atomic>
 #include <cstdio>
 #include <file_observer.hpp>
+#include <file_watcher_factory.hpp>
 #include <logger_factory.hpp>
 #include <logger_macros.hpp>
 #include <thread>
@@ -187,7 +188,8 @@ int main(int argc, char* argv[])
     appLogger->SetSettings(appLoggerSettings);
     observerLogger->SetSettings(observerLoggerSettings);
 
-    const auto observer = std::make_shared<file_observer::FileObserver>(observerLogger);
+    const auto watcher = file_observer::CreateFileWatcher<file_observer::PollingWatcherTag>(observerLogger);
+    const auto observer = std::make_shared<file_observer::FileObserver>(watcher, observerLogger);
     QSet<QString> observedPaths;
     const QVector<QString> paths = ReadInitialPaths(cin, cout);
 
