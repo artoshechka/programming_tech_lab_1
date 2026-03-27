@@ -1,0 +1,71 @@
+name: Coverage Report
+
+on:
+  workflow_dispatch:
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            ninja-build \
+            g++ \
+            qtbase5-dev \
+            libssl-dev \
+            libgtest-dev \
+            python3-pip
+          python3 -m pip install --upgrade pip
+          python3 -m pip install gcovr
+
+      - name: Configure coverage build
+        run: |
+          rm -rf build-coverage
+          cmake -S . -B build-coverage \
+            -G Ninja \
+            -DFILE_OBSERVER_BUILD_TESTS=ON \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_FLAGS="--coverage -O0 -g"
+
+      - name: Build app and tests
+        run: |
+          cmake --build build-coverage --target file_observer_project build_tests --parallel
+
+      - name: Run tests
+        run: |
+          ctest --test-dir build-coverage --output-on-failure
+
+      - name: Generate HTML coverage report
+        run: |
+          cd build-coverage
+          rm -f coverage_cpp*
+          find . -name '*.gcov' -delete
+          gcovr -r .. \
+            --gcov-executable gcov \
+            --html-details coverage_cpp.html \
+            --filter ".*/(file_observer/src/.*\\.cpp|logger/src/.*\\.cpp|crypto_manager/src/.*\\.cpp)$" \
+            --exclude ".*main\\.cpp$" \
+            --exclude ".*/test/.*" \
+            --exclude ".*/CMakeFiles/.*" \
+            --exclude ".*/build-coverage/.*" \
+            --exclude ".*CMakeCXXCompilerId\\.cpp$" \
+            --exclude ".*\\.hpp$"
+
+      - name: Upload HTML coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html-report
+          path: |
+            build-coverage/coverage_cpp.html
+            build-coverage/coverage_cpp.css
+            build-coverage/coverage_cpp.js
+            build-coverage/coverage_cpp.functions.html
+            build-coverage/coverage_cpp.*.html
+          if-no-files-found: error
