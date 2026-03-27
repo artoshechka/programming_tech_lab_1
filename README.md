@@ -40,16 +40,12 @@ classDiagram
 	class main {
 		+int main(argc, argv)
 	}
-
 		class FileObserver {
 			+FileObserver(watcher, logger, parent)
 			+~FileObserver()
 			+AddFile(path)
 			+RemoveFile(path)
 			+ListAllFiles()
-			+OnFileChanged(path, size) <<slot>>
-			+OnFileCreated(path) <<slot>>
-			+OnFileRemoved(path) <<slot>>
 		}
 		class IFileWatcher {
 			+IFileWatcher(parent)
@@ -57,9 +53,6 @@ classDiagram
 			+AddFile(path)
 			+RemoveFile(path)
 			+ListFiles()
-			+fileChanged(path, size) <<signal>>
-			+fileCreated(path) <<signal>>
-			+fileRemoved(path) <<signal>>
 		}
 		class PollingFileWatcher {
 			+PollingFileWatcher(intervalMs, logger, parent)
@@ -134,10 +127,6 @@ classDiagram
 	main ..> AppSysLogger 
 	main ..> ThreadSafeLogger 
 	main ..> IFileWatcher 
-
-	IFileWatcher ..> FileObserver : fileChanged --> OnFileChanged
-	IFileWatcher ..> FileObserver : fileCreated --> OnFileCreated
-	IFileWatcher ..> FileObserver : fileRemoved --> OnFileRemoved
 ```
 
 ## Инструкция для пользователя
