@@ -13,8 +13,8 @@ namespace logger
 /// @brief Fwd decl тега логгера приложения для фабрики
 struct AppLoggerTag;
 
-/// @brief Fwd decl тега логгера наблюдения для фабрики
-struct ObserverLoggerTag;
+/// @brief Fwd decl тега системного логгера приложения для фабрики
+struct AppSysLoggerTag;
 
 /// @brief Получить singleton-логгер по типу тега
 /// @tparam TLoggerTag Тип тега логгера
@@ -26,9 +26,9 @@ std::shared_ptr<ILogger> GetLogger();
 template <>
 std::shared_ptr<ILogger> GetLogger<AppLoggerTag>();
 
-/// @brief Специализация фабрики для логгера наблюдения
+/// @brief Специализация фабрики для системного логгера приложения
 template <>
-std::shared_ptr<ILogger> GetLogger<ObserverLoggerTag>();
+std::shared_ptr<ILogger> GetLogger<AppSysLoggerTag>();
 
 }  // namespace logger
 

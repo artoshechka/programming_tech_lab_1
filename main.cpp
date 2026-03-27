@@ -18,7 +18,7 @@ namespace
 {
 /// @brief Выводит список доступных команд интерактивной консоли.
 /// @param[in,out] cout поток вывода в консоль
-void PrintHelp(QTextStream &cout)
+void PrintHelp(QTextStream& cout)
 {
     cout << "Commands:\n";
     cout << "  add <path>    - add file to monitoring\n";
@@ -31,7 +31,7 @@ void PrintHelp(QTextStream &cout)
 /// @param[in,out] cin поток ввода из консоли
 /// @param[in,out] cout поток вывода в консоль
 /// @return список путей, введенных пользователем
-QVector<QString> ReadInitialPaths(QTextStream &cin, QTextStream &cout)
+QVector<QString> ReadInitialPaths(QTextStream& cin, QTextStream& cout)
 {
     QVector<QString> paths;
 
@@ -60,10 +60,10 @@ QVector<QString> ReadInitialPaths(QTextStream &cin, QTextStream &cout)
 /// @param[in] appLogger логгер приложения
 /// @param[in,out] app экземпляр приложения для завершения по команде `quit`
 /// @param[in,out] shouldExit флаг для остановки потока консоли
-void ProcessConsoleCommand(const QString &line, QTextStream &cout,
-                           const std::shared_ptr<file_observer::FileObserver> &observer,
-                           const std::shared_ptr<logger::ILogger> &appLogger, QCoreApplication &app,
-                           std::atomic<bool> &shouldExit)
+void ProcessConsoleCommand(const QString& line, QTextStream& cout,
+                           const std::shared_ptr<file_observer::FileObserver>& observer,
+                           const std::shared_ptr<logger::ILogger>& appLogger, QCoreApplication& app,
+                           std::atomic<bool>& shouldExit)
 {
     const QString trimmedLine = line.trimmed();
     if (trimmedLine.isEmpty())
@@ -74,57 +74,49 @@ void ProcessConsoleCommand(const QString &line, QTextStream &cout,
     if (trimmedLine.toLower() == "help")
     {
         PrintHelp(cout);
-    }
-    else if (trimmedLine.toLower() == "list")
+    } else if (trimmedLine.toLower() == "list")
     {
         const auto files = observer->ListAllFiles();
         if (files.isEmpty())
         {
             LogInfo(appLogger) << "No files are monitored.";
-        }
-        else
+        } else
         {
             LogInfo(appLogger) << "Monitored files:";
-            for (const auto &path : files)
+            for (const auto& path : files)
             {
                 LogInfo(appLogger) << "  " << path;
             }
         }
         cout.flush();
-    }
-    else if (trimmedLine.toLower() == "quit" || trimmedLine.toLower() == "exit")
+    } else if (trimmedLine.toLower() == "quit" || trimmedLine.toLower() == "exit")
     {
         LogInfo(appLogger) << "Monitoring stopped by user command.";
         shouldExit = true;
         app.exit();
-    }
-    else if (trimmedLine.toLower() == "add" || trimmedLine.startsWith("add "))
+    } else if (trimmedLine.toLower() == "add" || trimmedLine.startsWith("add "))
     {
         const QString commandPath = trimmedLine.mid(4).trimmed();
         if (commandPath.isEmpty())
         {
             cout << "Usage: add <path>\n";
-        }
-        else
+        } else
         {
             observer->AddFile(commandPath);
             LogInfo(appLogger) << "Added file to monitoring: " << commandPath;
         }
-    }
-    else if (trimmedLine.toLower() == "remove" || trimmedLine.startsWith("remove "))
+    } else if (trimmedLine.toLower() == "remove" || trimmedLine.startsWith("remove "))
     {
         const QString commandPath = trimmedLine.mid(7).trimmed();
         if (commandPath.isEmpty())
         {
             cout << "Usage: remove <path>\n";
-        }
-        else
+        } else
         {
             observer->RemoveFile(commandPath);
             LogInfo(appLogger) << "Removed file from monitoring: " << commandPath;
         }
-    }
-    else
+    } else
     {
         LogWarning(appLogger) << "Unknown console command: " << trimmedLine
                               << ". Type 'help' to see available commands.";
@@ -132,13 +124,13 @@ void ProcessConsoleCommand(const QString &line, QTextStream &cout,
 
     cout.flush();
 }
-} // namespace
+}  // namespace
 
 /// @brief Точка входа в программу.
 /// @param[in] argc количество аргументов командной строки
 /// @param[in] argv массив аргументов командной строки
 /// @return код завершения приложения
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     QCoreApplication app(argc, argv);
 
@@ -154,15 +146,14 @@ int main(int argc, char *argv[])
         if (arg.startsWith("--app-log-path="))
         {
             appLogPath = arg.mid(QString("--app-log-path=").length()).trimmed();
-        }
-        else if (arg.startsWith("--observer-log-path="))
+        } else if (arg.startsWith("--observer-log-path="))
         {
             observerLogPath = arg.mid(QString("--observer-log-path=").length()).trimmed();
         }
     }
 
-    auto appLogger = logger::GetLogger<logger::AppLoggerTag>();
-    auto observerLogger = logger::GetLogger<logger::ObserverLoggerTag>();
+    auto appLogger = logger::GetLogger<logger::AppSysLoggerTag>();
+    auto observerLogger = logger::GetLogger<logger::AppLoggerTag>();
 
     const logger::LoggerSettings appLoggerSettings(
         appLogPath.isEmpty() ? QString() : appLogPath, logger::LogLevel::Debug,
@@ -180,7 +171,7 @@ int main(int argc, char *argv[])
 
     const QVector<QString> paths = ReadInitialPaths(cin, cout);
 
-    for (const auto &path : paths)
+    for (const auto& path : paths)
     {
         observer->AddFile(path);
         LogInfo(appLogger) << "Added file to monitoring: " << path;
@@ -206,13 +197,11 @@ int main(int argc, char *argv[])
                 QMetaObject::invokeMethod(
                     &app, [&, line]() { ProcessConsoleCommand(line, cout, observer, appLogger, app, shouldExit); },
                     Qt::QueuedConnection);
-            }
-            catch (const std::exception &e)
+            } catch (const std::exception& e)
             {
                 LogError(appLogger) << "Unexpected error occurred: " << e.what();
                 break;
-            }
-            catch (...)
+            } catch (...)
             {
                 LogError(appLogger) << "Unknown error occurred";
                 break;

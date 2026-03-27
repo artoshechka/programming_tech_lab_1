@@ -23,3 +23,13 @@ target_link_libraries(${PROJECT_NAME}
         logger
         Qt${QT_VERSION_MAJOR}::Core
 )
+
+create_test(
+    file_observer_test
+    test/polling_file_watcher.cpp
+    test/file_observer_test.cpp
+    LINK_LIBS
+        ${PROJECT_NAME}
+        Qt${QT_VERSION_MAJOR}::Test
+
+)
