@@ -8,10 +8,10 @@
 namespace file_observer
 {
 template <>
-std::shared_ptr<IFileWatcher> CreateFileWatcher<PollingWatcherTag>(std::shared_ptr<logger::ILogger> logger)
+std::unique_ptr<IFileWatcher> CreateFileWatcher<PollingWatcherTag>(std::shared_ptr<logger::ILogger> logger)
 {
     constexpr int kDefaultIntervalMs = 1000;
-    return std::make_shared<PollingFileWatcher>(kDefaultIntervalMs, std::move(logger));
+    return std::make_unique<PollingFileWatcher>(kDefaultIntervalMs, std::move(logger));
 }
 
 }  // namespace file_observer
