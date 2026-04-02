@@ -7,7 +7,8 @@
 
 using namespace file_observer;
 
-ObservedFileState::ObservedFileState(bool existsState, qint64 sizeState) : exists_(existsState), size_(sizeState)
+ObservedFileState::ObservedFileState(bool existsState, qint64 sizeState, const QDateTime& modifiedState)
+    : exists_(existsState), size_(sizeState), modified_(modifiedState)
 {
 }
 
@@ -29,7 +30,8 @@ void PollingFileWatcher::AddFile(const QString& path)
 
     QFileInfo info(path);
 
-    files_[path] = ObservedFileState(info.exists(), info.exists() ? info.size() : 0);
+    files_[path] = ObservedFileState(info.exists(), info.exists() ? info.size() : 0,
+                                     info.exists() ? info.lastModified() : QDateTime());
 }
 
 void PollingFileWatcher::RemoveFile(const QString& path)
@@ -61,9 +63,11 @@ void PollingFileWatcher::CheckFileChanges(const QString& path)
 
     const bool existsNow = info.exists();
     const qint64 sizeNow = existsNow ? info.size() : 0;
+    const QDateTime modifiedNow = existsNow ? info.lastModified() : QDateTime();
 
     const bool existenceChanged = (prev.exists_ != existsNow);
     const bool sizeChanged = existsNow && prev.exists_ && (prev.size_ != sizeNow);
+    const bool modifiedChanged = existsNow && prev.exists_ && (prev.modified_ != modifiedNow);
 
     if (existenceChanged)
     {
@@ -74,11 +78,12 @@ void PollingFileWatcher::CheckFileChanges(const QString& path)
         {
             emit FileRemoved(path);
         }
-    } else if (sizeChanged)
+    } else if (sizeChanged || modifiedChanged)
     {
         emit FileChanged(path, sizeNow);
     }
 
     prev.exists_ = existsNow;
     prev.size_ = sizeNow;
+    prev.modified_ = modifiedNow;
 }
