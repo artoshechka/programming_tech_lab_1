@@ -28,7 +28,7 @@
 Приложение реализовано как консольная программа на базе `QCoreApplication`.
 
 Основные компоненты решения:
-- **FileObserver** — класс, отвечающий за наблюдение за файлами. Хранит текущее состояние каждого отслеживаемого файла, проверяет факт существования и размер.
+- **FileObserver** — класс, отвечающий за наблюдение за файлами. Хранит текущее состояние каждого отслеживаемого файла, проверяет факт существования, размер и дату последнего изменения.
 - **IFileWatcher / PollingFileWatcher** — абстракция и реализация механизма отслеживания изменений файлов.
 - **QTimer** — выполняет периодическую проверку файлов, чтобы фиксировать удаление, повторное появление файла и изменение размера.
 - **ILogger / AppLogger / ObserverLogger** — подсистема логирования для вывода сообщений приложения и событий наблюдения в консоль или файл.
@@ -62,9 +62,10 @@ classDiagram
 			+ListFiles()
 		}
 		class ObservedFileState {
-			+ObservedFileState(existsState, sizeState)
+			+ObservedFileState(existsState, sizeState, modifiedState)
 			+bool exists_
 			+qint64 size_
+			+QDateTime modified_
 		}
 		class FileWatcherFactory {
 			+CreateFileWatcher<TWatcherTag>(logger)
