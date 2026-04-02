@@ -40,16 +40,12 @@ classDiagram
 	class main {
 		+int main(argc, argv)
 	}
-
 		class FileObserver {
 			+FileObserver(watcher, logger, parent)
 			+~FileObserver()
 			+AddFile(path)
 			+RemoveFile(path)
 			+ListAllFiles()
-			+OnFileChanged(path, size) <<slot>>
-			+OnFileCreated(path) <<slot>>
-			+OnFileRemoved(path) <<slot>>
 		}
 		class IFileWatcher {
 			+IFileWatcher(parent)
@@ -57,9 +53,6 @@ classDiagram
 			+AddFile(path)
 			+RemoveFile(path)
 			+ListFiles()
-			+fileChanged(path, size) <<signal>>
-			+fileCreated(path) <<signal>>
-			+fileRemoved(path) <<signal>>
 		}
 		class PollingFileWatcher {
 			+PollingFileWatcher(intervalMs, logger, parent)
@@ -134,12 +127,9 @@ classDiagram
 	main ..> AppSysLogger 
 	main ..> ThreadSafeLogger 
 	main ..> IFileWatcher 
-
-	IFileWatcher ..> FileObserver : fileChanged --> OnFileChanged
-	IFileWatcher ..> FileObserver : fileCreated --> OnFileCreated
-	IFileWatcher ..> FileObserver : fileRemoved --> OnFileRemoved
 ```
-
+### Диаграмма слотов и сигналов
+![signal_slot_diag](doc/diagramm/signal_slot_diag.svg)
 ## Инструкция для пользователя
 Сборка и запуск зависят от операционной системы.
 
@@ -203,18 +193,9 @@ cmake --build .
 - `quit` — завершить работу программы.
 
 ## Тестирование
-Для проверки работы приложения используйте следующие сценарии:
-
-- **Сценарий 1:** Запуск программы и добавление существующего непустого файла. Ожидается вывод сообщения о существовании файла и его размере.
-- **Сценарий 2:** Изменение содержимого наблюдаемого файла во время работы. Ожидается сообщение об изменении и новый размер файла.
-- **Сценарий 3:** Удаление наблюдаемого файла. Ожидается сообщение о том, что файл не существует.
-- **Сценарий 4:** Повторное создание ранее удаленного файла по тому же пути. Ожидается сообщение о появлении файла и его текущем размере.
-- **Сценарий 5:** Добавление пустого файла. Ожидается сообщение о существовании пустого файла.
-- **Сценарий 6:** Запуск программы без добавления файлов на старте. Ожидается сообщение о том, что пока не добавлен ни один файл.
-- **Сценарий 7:** Добавление файла командой `add <path>` во время работы. Ожидается включение файла в мониторинг и вывод его состояния.
-- **Сценарий 8:** Удаление файла из мониторинга командой `remove <path>`. Ожидается прекращение уведомлений по этому файлу.
-- **Сценарий 9:** Ввод неизвестной команды. Ожидается сообщение об ошибке и подсказка использовать `help`.
-- **Сценарий 10:** Запуск приложения с дополнительными параметрами. Ожидается, что приложение продолжает работать с выводом логов только в консоль.
+```console
+ToDo: описать случаи(с шагами воспроизведения), подготовить тестовые наборы
+```
 
 ### Unit-тесты (GoogleTest)
 
