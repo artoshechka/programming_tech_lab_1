@@ -120,7 +120,7 @@ classDiagram
 	PollingFileWatcher --|> IFileWatcher
 	FileObserver o-- IFileWatcher
 	FileObserver o-- ILogger
-	FileObserver *-- ObservedFileState
+	PollingFileWatcher ..> ObservedFileState
 	ThreadSafeLogger --|> ILogger
 	AppLogger --|> ThreadSafeLogger
 	AppSysLogger --|> ThreadSafeLogger
