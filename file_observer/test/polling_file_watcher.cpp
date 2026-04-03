@@ -240,6 +240,28 @@ TEST_F(PollingFileWatcherTest, CheckFiles_CreateThenModify_EmitsBothSignals)
     EXPECT_EQ(changedSpy.count(), 1);
 }
 
+TEST_F(PollingFileWatcherTest, CheckFiles_SameSizeContentChange_EmitsFileChanged)
+{
+    PollingFileWatcher watcher(50, logger_);
+    QTemporaryFile* tempFile = CreateTempFile("1");
+    QString path = tempFile->fileName();
+
+    QSignalSpy changedSpy(&watcher, &PollingFileWatcher::FileChanged);
+
+    watcher.AddFile(path);
+
+    QCoreApplication::processEvents();
+    QTest::qWait(60);
+
+    ModifyFile(path, "2");
+
+    QTest::qWait(1100);
+
+    ASSERT_TRUE(WaitForSignal(changedSpy, 500));
+    EXPECT_EQ(changedSpy.count(), 1);
+    EXPECT_EQ(changedSpy.first().first().toString(), path);
+}
+
 TEST_F(PollingFileWatcherTest, AddFile_NonExistentFile_AddsToWatchList)
 {
     PollingFileWatcher watcher(50, logger_);

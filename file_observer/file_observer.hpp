@@ -21,7 +21,7 @@ class FileObserver : public QObject
     /// @brief Конструктор
     /// @param[in] watcher Реализация наблюдателя (передаётся во владение)
     /// @param[in] logger Логгер
-    explicit FileObserver(std::shared_ptr<IFileWatcher> watcher, std::shared_ptr<logger::ILogger> logger,
+    explicit FileObserver(std::unique_ptr<IFileWatcher> watcher, std::shared_ptr<logger::ILogger> logger,
                           QObject* parent = nullptr);
 
     /// @brief Деструктор
@@ -35,6 +35,9 @@ class FileObserver : public QObject
 
     /// @brief Получить список файлов
     QStringList ListAllFiles() const;
+
+    /// @brief Установить новый IFileWatcher
+    void SetWatcher(std::unique_ptr<IFileWatcher> watcher);
 
    private slots:
     /// @brief Файл был изменён
@@ -51,7 +54,7 @@ class FileObserver : public QObject
     void OnFileRemoved(const QString& path);
 
    private:
-    std::shared_ptr<IFileWatcher> watcher_;    ///< наблюдатель за файлами
+    std::unique_ptr<IFileWatcher> watcher_;    ///< наблюдатель за файлами (стратегия)
     std::shared_ptr<logger::ILogger> logger_;  ///< Логгер
 };
 
