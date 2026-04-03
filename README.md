@@ -21,18 +21,17 @@
 
 ## Зависимости
 Для сборки и запуска нужны:
-- **Qt** v5 с модулем `Core`
-- **CMake** v3.16+
+- **Qt** v5.12
+- **CMake** v3.16
+- **Стандарт С++** 17
 
 ## Архитектура решения
-Приложение реализовано как консольная программа на базе `QCoreApplication`.
-
-Основные компоненты решения:
-- **FileObserver** — класс, отвечающий за наблюдение за файлами. Хранит текущее состояние каждого отслеживаемого файла, проверяет факт существования и размер.
-- **IFileWatcher / PollingFileWatcher** — абстракция и реализация механизма отслеживания изменений файлов.
-- **QTimer** — выполняет периодическую проверку файлов, чтобы фиксировать удаление, повторное появление файла и изменение размера.
-- **ILogger / AppLogger / ObserverLogger** — подсистема логирования для вывода сообщений приложения и событий наблюдения в консоль или файл.
-
+Основные компоненты:
+- **main.cpp** — точка входа приложения. Несет ответственность за работу с терминалом и парсинг флагов.
+- **file_observer** — модуль, отвечающий за наблюдением за переданными файлами, используя разные стратегии наблюдения.
+- **logger** - модуль, отвечающий за логирование событий в системе
+    - **AppLogger** — singleton-логгер приложения, который используется в `main.cpp` для фиксации ошибок и ключевых этапов обработки.
+    - **AppSysLogger** — singleton-логгер для модулей приложения
 ### UML-диаграмма классов
 
 ```mermaid
@@ -62,9 +61,9 @@ classDiagram
 			+ListFiles()
 		}
 		class ObservedFileState {
-			+ObservedFileState(existsState, sizeState)
+			+ObservedFileState(existsState, modifiedState)
 			+bool exists_
-			+qint64 size_
+			+QDateTime modified_
 		}
 		class FileWatcherFactory {
 			+CreateFileWatcher<TWatcherTag>(logger)
@@ -72,37 +71,50 @@ classDiagram
 
 		class ILogger {
 			<<interface>>
+			+~ILogger()
 			+SetSettings(settings)
 			+GetSettings()
 			+Log(level, message, file, line, function)
 		}
 		class ThreadSafeLogger {
 			+ThreadSafeLogger(componentName, output)
-			+~ThreadSafeLogger()
 			+SetSettings(settings)
 			+GetSettings()
 			+Log(level, message, file, line, function)
+			#FormatMessage(level, message, file, line, function)
 		}
 		class AppLogger {
 			+AppLogger(output)
-			+~AppLogger()
 		}
 		class AppSysLogger {
 			+AppSysLogger(output)
-			+~AppSysLogger()
 		}
 		class LoggerSettings {
-			+LoggerSettings(logFilePath, logLevel, output)
-			+logFilePath_
-			+logLevel_
-			+output_
+			+logFilePath_ : optional~QString~
+			+logLevel_ : LogLevel
+			+output_ : LogOutput
 		}
 		class LogEntryStream {
 			+LogEntryStream(logger, level, file, line, function)
-			+~LogEntryStream()
+			+operator<<()
 		}
 		class LoggerFactory {
-			+GetLogger<TLoggerTag>()
+			+GetLogger~AppLoggerTag~()
+			+GetLogger~AppSysLoggerTag~()
+	}
+		class LogLevel {
+			<<enumeration>>
+			Trace
+			Debug
+			Info
+			Warning
+			Error
+			Fatal
+	}
+		class LogOutput {
+			<<enumeration>>
+			Console
+			File
 	}
 
 	PollingFileWatcher --|> IFileWatcher
@@ -114,19 +126,16 @@ classDiagram
 	AppSysLogger --|> ThreadSafeLogger
 	ThreadSafeLogger *-- LoggerSettings
 	LogEntryStream o-- ILogger
+	LoggerSettings ..> LogLevel
+	LoggerSettings ..> LogOutput
  
 	FileWatcherFactory ..> IFileWatcher 
-	LoggerFactory ..> ILogger 
+	LoggerFactory ..> AppLogger
+	LoggerFactory ..> AppSysLogger
 
 	main ..> FileObserver 
 	main ..> FileWatcherFactory 
 	main ..> LoggerFactory 
-	main ..> LoggerSettings 
-	main ..> LogEntryStream 
-	main ..> AppLogger 
-	main ..> AppSysLogger 
-	main ..> ThreadSafeLogger 
-	main ..> IFileWatcher 
 ```
 ### Диаграмма слотов и сигналов
 ![signal_slot_diag](doc/diagramm/signal_slot_diag.svg)
@@ -142,19 +151,10 @@ mkdir build
 cd build
 ```
 
-> Примечание: если переменная `PATH` не настроена, используйте полные пути к `cmake` и `windeployqt`.
-
 Сконфигурируйте и соберите проект:
 ```powershell
 cmake .. && cmake --build .
 ```
-
-При необходимости разверните Qt-зависимости рядом с `.exe`:
-
-```powershell
-<path>\windeployqt .\file_observer_project.exe
-```
-
 Запустите программу:
 ```powershell
 .\file_observer_project.exe
@@ -193,9 +193,53 @@ cmake --build .
 - `quit` — завершить работу программы.
 
 ## Тестирование
-```console
-ToDo: описать случаи(с шагами воспроизведения), подготовить тестовые наборы
-```
+
+### Пользовательские тест-кейсы
+
+#### Case №1
+Проверка запуска и отображения справки
+* Входные параметры: -
+	* Шаг 1 - выполнить запуск `./file_observer_project`
+	* Шаг 2 - на этапе ввода путей нажать Enter
+	* Шаг 3 - ввести команду `help`
+* Результат: приложение не завершается, в консоли выводится список доступных команд
+
+#### Case №2
+Проверка добавления файла и команды list
+* Входные параметры: существует файл `../testing/file1.txt`
+	* Шаг 1 - запустить приложение `./file_observer_project`
+	* Шаг 2 - завершить ввод стартовых путей пустой строкой
+	* Шаг 3 - ввести `add ../testing/file1.txt`
+	* Шаг 4 - ввести `list`
+* Результат: путь `../testing/file1.txt` присутствует в списке наблюдаемых
+
+#### Case №3
+Проверка изменения файла с изменением размера
+* Входные параметры: файл `../testing/file1.txt` уже добавлен командой `add`
+	* Шаг 1 - Дописать символ "1" в `../testing/file1.txt`
+* Результат: в приложении появляется сообщение о событии изменения файла и выводится новый размер
+
+#### Case №4
+Проверка изменения файла без изменения размера
+* Входные параметры: файл `../testing/file_same_size.txt` содержит `1` и добавлен в наблюдение
+	* Шаг 1 - Заменить символ "1" на символ "2" в `../testing/file1.txt`
+* Результат: в приложении появляется сообщение о событии изменения, даже если размер файла не изменился
+
+#### Case №5
+Проверка удаления и повторного создания файла
+* Входные параметры: файл `../testing/file_recreate.txt` добавлен в наблюдение
+	* Шаг 1 - Удалить файл `../testing/file_recreate.txt`
+	* Шаг 2 - Повторно создать файл `../testing/file_recreate.txt`
+* Результат: сначала фиксируется событие удаления, затем событие существования файла
+
+#### Case №6
+Проверка удаления из наблюдения
+* Входные параметры: файл `../testing/file1.txt` добавлен через `add`
+	* Шаг 1 - ввести `remove ../testing/file1.txt`
+	* Шаг 2 - ввести `list`
+	* Шаг 3 - изменить файл в отдельном терминале
+* Результат: файл отсутствует в списке наблюдения, новые события по нему в приложении не появляются
+
 
 ### Unit-тесты (GoogleTest)
 

@@ -5,6 +5,7 @@
 #ifndef GUID_1a2b3c4d_5e6f_47aa_8b9c_123456789abc
 #define GUID_1a2b3c4d_5e6f_47aa_8b9c_123456789abc
 
+#include <QDateTime>
 #include <QFileInfo>
 #include <QHash>
 #include <QTimer>
@@ -18,10 +19,10 @@ namespace file_observer
 /// @brief Состояние наблюдаемого файла
 struct ObservedFileState
 {
-    ObservedFileState(bool existsState = false, qint64 sizeState = 0);
+    ObservedFileState(bool existsState = false, const QDateTime& modifiedState = QDateTime());
 
-    bool exists_;  ///< Признак существования файла
-    qint64 size_;  ///< Размер файла
+    bool exists_;         ///< Признак существования файла
+    QDateTime modified_;  ///< Дата последнего изменения
 };
 
 /// @brief Контейнер наблюдаемых файлов
