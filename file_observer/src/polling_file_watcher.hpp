@@ -19,10 +19,9 @@ namespace file_observer
 /// @brief Состояние наблюдаемого файла
 struct ObservedFileState
 {
-    ObservedFileState(bool existsState = false, qint64 sizeState = 0, const QDateTime& modifiedState = QDateTime());
+    ObservedFileState(bool existsState = false, const QDateTime& modifiedState = QDateTime());
 
     bool exists_;         ///< Признак существования файла
-    qint64 size_;         ///< Размер файла
     QDateTime modified_;  ///< Дата последнего изменения
 };
 
