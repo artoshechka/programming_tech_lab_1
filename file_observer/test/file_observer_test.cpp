@@ -105,9 +105,9 @@ class FakeFileWatcher final : public file_observer::IFileWatcher
         emit FileChanged(path, size);
     }
 
-    void EmitCreated(const QString& path)
+    void EmitCreated(const QString& path, qint64 size)
     {
-        emit FileCreated(path);
+        emit FileCreated(path, size);
     }
 
     void EmitRemoved(const QString& path)
