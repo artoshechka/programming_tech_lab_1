@@ -135,7 +135,7 @@ TEST_F(PollingFileWatcherTest, RemoveFile_ExistingPath_RemovesFromWatchList)
     EXPECT_TRUE(watcher.ListFiles().isEmpty());
 }
 
-TEST_F(PollingFileWatcherTest, CheckFiles_FileCreated_EmitsFileCreated)
+TEST_F(PollingFileWatcherTest, CheckFiles_FileExistence_EmitsFileExistence)
 {
     PollingFileWatcher watcher(50, logger_);
     QTemporaryFile* tempFile = CreateTempFile();
@@ -144,7 +144,7 @@ TEST_F(PollingFileWatcherTest, CheckFiles_FileCreated_EmitsFileCreated)
     delete tempFile;
     tempFiles_.removeOne(tempFile);
 
-    QSignalSpy createdSpy(&watcher, &PollingFileWatcher::FileCreated);
+    QSignalSpy createdSpy(&watcher, &PollingFileWatcher::FileExistence);
 
     watcher.AddFile(path);
 
@@ -215,7 +215,7 @@ TEST_F(PollingFileWatcherTest, CheckFiles_CreateThenModify_EmitsBothSignals)
     delete tempFile;
     tempFiles_.removeOne(tempFile);
 
-    QSignalSpy createdSpy(&watcher, &PollingFileWatcher::FileCreated);
+    QSignalSpy createdSpy(&watcher, &PollingFileWatcher::FileExistence);
     QSignalSpy changedSpy(&watcher, &PollingFileWatcher::FileChanged);
 
     watcher.AddFile(path);
@@ -268,7 +268,7 @@ TEST_F(PollingFileWatcherTest, AddFile_NonExistentFile_AddsToWatchList)
     QString nonExistentPath =
         QDir::tempPath() + "/nonexistent_test_file_" + QString::number(QDateTime::currentMSecsSinceEpoch());
 
-    QSignalSpy createdSpy(&watcher, &PollingFileWatcher::FileCreated);
+    QSignalSpy createdSpy(&watcher, &PollingFileWatcher::FileExistence);
 
     watcher.AddFile(nonExistentPath);
 

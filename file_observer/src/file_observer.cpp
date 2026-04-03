@@ -14,7 +14,7 @@ FileObserver::FileObserver(std::unique_ptr<IFileWatcher> watcher, std::shared_pt
     if (watcher_)
     {
         connect(watcher_.get(), &IFileWatcher::FileChanged, this, &FileObserver::OnFileChanged);
-        connect(watcher_.get(), &IFileWatcher::FileCreated, this, &FileObserver::OnFileCreated);
+        connect(watcher_.get(), &IFileWatcher::FileExistence, this, &FileObserver::OnFileExistence);
         connect(watcher_.get(), &IFileWatcher::FileRemoved, this, &FileObserver::OnFileRemoved);
     } else
     {
@@ -31,7 +31,7 @@ void FileObserver::SetWatcher(std::unique_ptr<IFileWatcher> watcher)
     if (watcher_)
     {
         connect(watcher_.get(), &IFileWatcher::FileChanged, this, &FileObserver::OnFileChanged);
-        connect(watcher_.get(), &IFileWatcher::FileCreated, this, &FileObserver::OnFileCreated);
+        connect(watcher_.get(), &IFileWatcher::FileExistence, this, &FileObserver::OnFileExistence);
         connect(watcher_.get(), &IFileWatcher::FileRemoved, this, &FileObserver::OnFileRemoved);
     } else
     {
@@ -81,7 +81,7 @@ void FileObserver::OnFileChanged(const QString& path, qint64 size)
     LogInfo(logger_) << "File changed: " << path << " Size: " << size;
 }
 
-void FileObserver::OnFileCreated(const QString& path, qint64 size)
+void FileObserver::OnFileExistence(const QString& path, qint64 size)
 {
     LogInfo(logger_) << "File created: " << path << " Size: " << size;
 }

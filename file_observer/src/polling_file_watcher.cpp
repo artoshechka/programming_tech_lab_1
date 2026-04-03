@@ -71,7 +71,7 @@ void PollingFileWatcher::CheckFileChanges(const QString& path)
     {
         if (existsNow)
         {
-            emit FileCreated(path, sizeNow);
+            emit FileExistence(path, sizeNow);
         } else
         {
             emit FileRemoved(path);
