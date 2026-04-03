@@ -44,7 +44,7 @@ class IFileWatcher : public QObject
 
     /// @brief Файл был создан
     /// @param[out] path Путь к файлу
-    void FileExistence(const QString& path, qint64 size);
+    void FileExistence(const QString& path, bool isExists, qint64 size);
 
     /// @brief Файл был удалён
     /// @param[out] path Путь к файлу

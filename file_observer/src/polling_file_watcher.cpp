@@ -31,6 +31,8 @@ void PollingFileWatcher::AddFile(const QString& path)
     QFileInfo info(path);
 
     files_[path] = ObservedFileState(info.exists(), info.exists() ? info.lastModified() : QDateTime());
+
+    emit FileExistence(path, info.exists(), info.size());
 }
 
 void PollingFileWatcher::RemoveFile(const QString& path)
@@ -71,7 +73,7 @@ void PollingFileWatcher::CheckFileChanges(const QString& path)
     {
         if (existsNow)
         {
-            emit FileExistence(path, sizeNow);
+            emit FileExistence(path, existsNow, sizeNow);
         } else
         {
             emit FileRemoved(path);
