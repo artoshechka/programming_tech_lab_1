@@ -166,7 +166,9 @@ int main(int argc, char* argv[])
     appLogger->SetSettings(appLoggerSettings);
     observerLogger->SetSettings(observerLoggerSettings);
 
-    auto watcher = file_observer::CreateFileWatcher<file_observer::PollingWatcherTag>(observerLogger);
+    constexpr int kDefaultIntervalMs = 1000;
+    auto watcher =
+        file_observer::CreateFileWatcher<file_observer::PollingWatcherTag>(kDefaultIntervalMs, observerLogger);
     const auto observer = std::make_shared<file_observer::FileObserver>(std::move(watcher), observerLogger);
 
     const QVector<QString> paths = ReadInitialPaths(cin, cout);
