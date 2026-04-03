@@ -81,9 +81,9 @@ void FileObserver::OnFileChanged(const QString& path, qint64 size)
     LogInfo(logger_) << "File changed: " << path << " Size: " << size;
 }
 
-void FileObserver::OnFileCreated(const QString& path)
+void FileObserver::OnFileCreated(const QString& path, qint64 size)
 {
-    LogInfo(logger_) << "File created: " << path;
+    LogInfo(logger_) << "File created: " << path << " Size: " << size;
 }
 
 void FileObserver::OnFileRemoved(const QString& path)

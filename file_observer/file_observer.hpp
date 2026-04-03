@@ -47,7 +47,7 @@ class FileObserver : public QObject
 
     /// @brief Файл был создан
     /// @param[in] path Путь к файлу
-    void OnFileCreated(const QString& path);
+    void OnFileCreated(const QString& path, qint64 size);
 
     /// @brief Файл был удалён
     /// @param[in] path Путь к файлу
