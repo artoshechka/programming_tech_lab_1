@@ -73,37 +73,50 @@ classDiagram
 
 		class ILogger {
 			<<interface>>
+			+~ILogger()
 			+SetSettings(settings)
 			+GetSettings()
 			+Log(level, message, file, line, function)
 		}
 		class ThreadSafeLogger {
 			+ThreadSafeLogger(componentName, output)
-			+~ThreadSafeLogger()
 			+SetSettings(settings)
 			+GetSettings()
 			+Log(level, message, file, line, function)
+			#FormatMessage(level, message, file, line, function)
 		}
 		class AppLogger {
 			+AppLogger(output)
-			+~AppLogger()
 		}
 		class AppSysLogger {
 			+AppSysLogger(output)
-			+~AppSysLogger()
 		}
 		class LoggerSettings {
-			+LoggerSettings(logFilePath, logLevel, output)
-			+logFilePath_
-			+logLevel_
-			+output_
+			+logFilePath_ : optional~QString~
+			+logLevel_ : LogLevel
+			+output_ : LogOutput
 		}
 		class LogEntryStream {
 			+LogEntryStream(logger, level, file, line, function)
-			+~LogEntryStream()
+			+operator<<()
 		}
 		class LoggerFactory {
-			+GetLogger<TLoggerTag>()
+			+GetLogger~AppLoggerTag~()
+			+GetLogger~AppSysLoggerTag~()
+	}
+		class LogLevel {
+			<<enumeration>>
+			Trace
+			Debug
+			Info
+			Warning
+			Error
+			Fatal
+	}
+		class LogOutput {
+			<<enumeration>>
+			Console
+			File
 	}
 
 	PollingFileWatcher --|> IFileWatcher
@@ -115,19 +128,16 @@ classDiagram
 	AppSysLogger --|> ThreadSafeLogger
 	ThreadSafeLogger *-- LoggerSettings
 	LogEntryStream o-- ILogger
+	LoggerSettings ..> LogLevel
+	LoggerSettings ..> LogOutput
  
 	FileWatcherFactory ..> IFileWatcher 
-	LoggerFactory ..> ILogger 
+	LoggerFactory ..> AppLogger
+	LoggerFactory ..> AppSysLogger
 
 	main ..> FileObserver 
 	main ..> FileWatcherFactory 
 	main ..> LoggerFactory 
-	main ..> LoggerSettings 
-	main ..> LogEntryStream 
-	main ..> AppLogger 
-	main ..> AppSysLogger 
-	main ..> ThreadSafeLogger 
-	main ..> IFileWatcher 
 ```
 ### Диаграмма слотов и сигналов
 ![signal_slot_diag](doc/diagramm/signal_slot_diag.svg)
