@@ -43,11 +43,11 @@ class PollingFileWatcher : public IFileWatcher
 
     /// @brief Добавить файл
     /// @param[in] path Путь к файлу
-    void AddFile(const QString& path) override;
+    bool AddFile(const QString& path) override;
 
     /// @brief Удалить файл
     /// @param[in] path Путь к файлу
-    void RemoveFile(const QString& path) override;
+    bool RemoveFile(const QString& path) override;
 
     /// @brief Вернуть список файлов
     /// @param[in] path Путь к файлу
