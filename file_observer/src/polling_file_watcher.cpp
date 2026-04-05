@@ -24,18 +24,23 @@ PollingFileWatcher::PollingFileWatcher(int intervalMs, std::shared_ptr<logger::I
 
 PollingFileWatcher::~PollingFileWatcher() = default;
 
-void PollingFileWatcher::AddFile(const QString& path)
+bool PollingFileWatcher::AddFile(const QString& path)
 {
-    if (path.isEmpty()) return;
+    if (path.isEmpty()) return false;
 
     QFileInfo info(path);
 
     files_[path] = ObservedFileState(info.exists(), info.exists() ? info.lastModified() : QDateTime());
+
+    emit FileExistence(path, info.exists(), info.size());
+    return true;
 }
 
-void PollingFileWatcher::RemoveFile(const QString& path)
+bool PollingFileWatcher::RemoveFile(const QString& path)
 {
-    files_.remove(path);
+    if (path.isEmpty()) return false;
+
+    return files_.remove(path) > 0;
 }
 
 QStringList PollingFileWatcher::ListFiles() const
@@ -71,7 +76,7 @@ void PollingFileWatcher::CheckFileChanges(const QString& path)
     {
         if (existsNow)
         {
-            emit FileCreated(path, sizeNow);
+            emit FileExistence(path, existsNow, sizeNow);
         } else
         {
             emit FileRemoved(path);

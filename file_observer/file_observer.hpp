@@ -28,10 +28,10 @@ class FileObserver : public QObject
     ~FileObserver();
 
     /// @brief Добавить файл
-    void AddFile(const QString& path);
+    bool AddFile(const QString& path);
 
     /// @brief Удалить файл
-    void RemoveFile(const QString& path);
+    bool RemoveFile(const QString& path);
 
     /// @brief Получить список файлов
     QStringList ListAllFiles() const;
@@ -47,7 +47,7 @@ class FileObserver : public QObject
 
     /// @brief Файл был создан
     /// @param[in] path Путь к файлу
-    void OnFileCreated(const QString& path, qint64 size);
+    void OnFileExistence(const QString& path, bool isExists, qint64 size);
 
     /// @brief Файл был удалён
     /// @param[in] path Путь к файлу

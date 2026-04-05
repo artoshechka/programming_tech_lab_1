@@ -26,11 +26,11 @@ class IFileWatcher : public QObject
 
     /// @brief Добавить файл для наблюдения
     /// @param[in] path Путь к файлу
-    virtual void AddFile(const QString& path) = 0;
+    virtual bool AddFile(const QString& path) = 0;
 
     /// @brief Удалить файл из наблюдения
     /// @param[in] path Путь к файлу
-    virtual void RemoveFile(const QString& path) = 0;
+    virtual bool RemoveFile(const QString& path) = 0;
 
     /// @brief Получить список файлов
     /// @return Список путей
@@ -44,7 +44,7 @@ class IFileWatcher : public QObject
 
     /// @brief Файл был создан
     /// @param[out] path Путь к файлу
-    void FileCreated(const QString& path, qint64 size);
+    void FileExistence(const QString& path, bool isExists, qint64 size);
 
     /// @brief Файл был удалён
     /// @param[out] path Путь к файлу

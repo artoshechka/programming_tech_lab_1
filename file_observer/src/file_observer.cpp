@@ -14,7 +14,7 @@ FileObserver::FileObserver(std::unique_ptr<IFileWatcher> watcher, std::shared_pt
     if (watcher_)
     {
         connect(watcher_.get(), &IFileWatcher::FileChanged, this, &FileObserver::OnFileChanged);
-        connect(watcher_.get(), &IFileWatcher::FileCreated, this, &FileObserver::OnFileCreated);
+        connect(watcher_.get(), &IFileWatcher::FileExistence, this, &FileObserver::OnFileExistence);
         connect(watcher_.get(), &IFileWatcher::FileRemoved, this, &FileObserver::OnFileRemoved);
     } else
     {
@@ -31,7 +31,7 @@ void FileObserver::SetWatcher(std::unique_ptr<IFileWatcher> watcher)
     if (watcher_)
     {
         connect(watcher_.get(), &IFileWatcher::FileChanged, this, &FileObserver::OnFileChanged);
-        connect(watcher_.get(), &IFileWatcher::FileCreated, this, &FileObserver::OnFileCreated);
+        connect(watcher_.get(), &IFileWatcher::FileExistence, this, &FileObserver::OnFileExistence);
         connect(watcher_.get(), &IFileWatcher::FileRemoved, this, &FileObserver::OnFileRemoved);
     } else
     {
@@ -41,28 +41,50 @@ void FileObserver::SetWatcher(std::unique_ptr<IFileWatcher> watcher)
 
 FileObserver::~FileObserver() = default;
 
-void FileObserver::AddFile(const QString& filePath)
+bool FileObserver::AddFile(const QString& filePath)
 {
-    if (filePath.isEmpty()) return;
+    if (filePath.isEmpty())
+    {
+        LogWarning(logger_) << "Cannot add file because path is empty";
+        return false;
+    }
 
     if (!watcher_)
     {
         LogWarning(logger_) << "Cannot add file because watcher is not set: " << filePath;
-        return;
+        return false;
     }
 
-    watcher_->AddFile(filePath);
+    const bool isAdded = watcher_->AddFile(filePath);
+    if (!isAdded)
+    {
+        LogWarning(logger_) << "Failed to add file in watcher: " << filePath;
+    }
+
+    return isAdded;
 }
 
-void FileObserver::RemoveFile(const QString& filePath)
+bool FileObserver::RemoveFile(const QString& filePath)
 {
+    if (filePath.isEmpty())
+    {
+        LogWarning(logger_) << "Cannot remove file because path is empty";
+        return false;
+    }
+
     if (!watcher_)
     {
         LogWarning(logger_) << "Cannot remove file because watcher is not set: " << filePath;
-        return;
+        return false;
     }
 
-    watcher_->RemoveFile(filePath);
+    const bool isRemoved = watcher_->RemoveFile(filePath);
+    if (!isRemoved)
+    {
+        LogWarning(logger_) << "Failed to remove file in watcher: " << filePath;
+    }
+
+    return isRemoved;
 }
 
 QStringList FileObserver::ListAllFiles() const
@@ -81,9 +103,9 @@ void FileObserver::OnFileChanged(const QString& path, qint64 size)
     LogInfo(logger_) << "File changed: " << path << " Size: " << size;
 }
 
-void FileObserver::OnFileCreated(const QString& path, qint64 size)
+void FileObserver::OnFileExistence(const QString& path, bool isExists, qint64 size)
 {
-    LogInfo(logger_) << "File created: " << path << " Size: " << size;
+    LogInfo(logger_) << "File: " << path << " Existence: " << isExists << " Size:" << size;
 }
 
 void FileObserver::OnFileRemoved(const QString& path)
