@@ -95,7 +95,7 @@ TEST_F(PollingFileWatcherTest, AddFile_ValidPath_AddsToWatchList)
     PollingFileWatcher watcher(100, logger_);
     QTemporaryFile* tempFile = CreateTempFile("test content");
 
-    watcher.AddFile(tempFile->fileName());
+    EXPECT_TRUE(watcher.AddFile(tempFile->fileName()));
 
     QStringList files = watcher.ListFiles();
     EXPECT_EQ(files.size(), 1);
@@ -106,7 +106,7 @@ TEST_F(PollingFileWatcherTest, AddFile_EmptyPath_DoesNothing)
 {
     PollingFileWatcher watcher(100, logger_);
 
-    watcher.AddFile("");
+    EXPECT_FALSE(watcher.AddFile(""));
 
     EXPECT_TRUE(watcher.ListFiles().isEmpty());
 }
@@ -116,8 +116,8 @@ TEST_F(PollingFileWatcherTest, AddFile_DuplicatePath_UpdatesState)
     PollingFileWatcher watcher(100, logger_);
     QTemporaryFile* tempFile = CreateTempFile("content");
 
-    watcher.AddFile(tempFile->fileName());
-    watcher.AddFile(tempFile->fileName());
+    EXPECT_TRUE(watcher.AddFile(tempFile->fileName()));
+    EXPECT_TRUE(watcher.AddFile(tempFile->fileName()));
 
     QStringList files = watcher.ListFiles();
     EXPECT_EQ(files.size(), 1);
@@ -129,8 +129,8 @@ TEST_F(PollingFileWatcherTest, RemoveFile_ExistingPath_RemovesFromWatchList)
     PollingFileWatcher watcher(100, logger_);
     QTemporaryFile* tempFile = CreateTempFile("test content");
 
-    watcher.AddFile(tempFile->fileName());
-    watcher.RemoveFile(tempFile->fileName());
+    EXPECT_TRUE(watcher.AddFile(tempFile->fileName()));
+    EXPECT_TRUE(watcher.RemoveFile(tempFile->fileName()));
 
     EXPECT_TRUE(watcher.ListFiles().isEmpty());
 }
@@ -146,7 +146,7 @@ TEST_F(PollingFileWatcherTest, CheckFiles_FileExistence_EmitsFileExistence)
 
     QSignalSpy createdSpy(&watcher, &PollingFileWatcher::FileExistence);
 
-    watcher.AddFile(path);
+    EXPECT_TRUE(watcher.AddFile(path));
 
     QCoreApplication::processEvents();
     QTest::qWait(60);
@@ -169,7 +169,7 @@ TEST_F(PollingFileWatcherTest, CheckFiles_FileRemoved_EmitsFileRemoved)
 
     QSignalSpy removedSpy(&watcher, &PollingFileWatcher::FileRemoved);
 
-    watcher.AddFile(path);
+    EXPECT_TRUE(watcher.AddFile(path));
 
     QCoreApplication::processEvents();
     QTest::qWait(60);
@@ -193,8 +193,8 @@ TEST_F(PollingFileWatcherTest, CheckFiles_MultipleFiles_EmitsCorrectSignals)
 
     QSignalSpy changedSpy(&watcher, &PollingFileWatcher::FileChanged);
 
-    watcher.AddFile(path1);
-    watcher.AddFile(path2);
+    EXPECT_TRUE(watcher.AddFile(path1));
+    EXPECT_TRUE(watcher.AddFile(path2));
 
     QCoreApplication::processEvents();
     QTest::qWait(60);
@@ -218,7 +218,7 @@ TEST_F(PollingFileWatcherTest, CheckFiles_CreateThenModify_EmitsBothSignals)
     QSignalSpy createdSpy(&watcher, &PollingFileWatcher::FileExistence);
     QSignalSpy changedSpy(&watcher, &PollingFileWatcher::FileChanged);
 
-    watcher.AddFile(path);
+    EXPECT_TRUE(watcher.AddFile(path));
 
     QCoreApplication::processEvents();
     QTest::qWait(60);
@@ -248,7 +248,7 @@ TEST_F(PollingFileWatcherTest, CheckFiles_SameSizeContentChange_EmitsFileChanged
 
     QSignalSpy changedSpy(&watcher, &PollingFileWatcher::FileChanged);
 
-    watcher.AddFile(path);
+    EXPECT_TRUE(watcher.AddFile(path));
 
     QCoreApplication::processEvents();
     QTest::qWait(60);
@@ -270,7 +270,7 @@ TEST_F(PollingFileWatcherTest, AddFile_NonExistentFile_AddsToWatchList)
 
     QSignalSpy createdSpy(&watcher, &PollingFileWatcher::FileExistence);
 
-    watcher.AddFile(nonExistentPath);
+    EXPECT_TRUE(watcher.AddFile(nonExistentPath));
 
     QCoreApplication::processEvents();
     QTest::qWait(60);
@@ -293,9 +293,9 @@ TEST_F(PollingFileWatcherTest, ListFiles_ReturnsAllWatchedFiles)
     QTemporaryFile* file2 = CreateTempFile();
     QTemporaryFile* file3 = CreateTempFile();
 
-    watcher.AddFile(file1->fileName());
-    watcher.AddFile(file2->fileName());
-    watcher.AddFile(file3->fileName());
+    EXPECT_TRUE(watcher.AddFile(file1->fileName()));
+    EXPECT_TRUE(watcher.AddFile(file2->fileName()));
+    EXPECT_TRUE(watcher.AddFile(file3->fileName()));
 
     QStringList files = watcher.ListFiles();
 

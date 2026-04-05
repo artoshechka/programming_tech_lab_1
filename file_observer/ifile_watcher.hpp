@@ -26,11 +26,11 @@ class IFileWatcher : public QObject
 
     /// @brief Добавить файл для наблюдения
     /// @param[in] path Путь к файлу
-    virtual void AddFile(const QString& path) = 0;
+    virtual bool AddFile(const QString& path) = 0;
 
     /// @brief Удалить файл из наблюдения
     /// @param[in] path Путь к файлу
-    virtual void RemoveFile(const QString& path) = 0;
+    virtual bool RemoveFile(const QString& path) = 0;
 
     /// @brief Получить список файлов
     /// @return Список путей

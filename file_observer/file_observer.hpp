@@ -28,10 +28,10 @@ class FileObserver : public QObject
     ~FileObserver();
 
     /// @brief Добавить файл
-    void AddFile(const QString& path);
+    bool AddFile(const QString& path);
 
     /// @brief Удалить файл
-    void RemoveFile(const QString& path);
+    bool RemoveFile(const QString& path);
 
     /// @brief Получить список файлов
     QStringList ListAllFiles() const;

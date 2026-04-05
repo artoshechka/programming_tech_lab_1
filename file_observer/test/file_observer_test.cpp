@@ -68,16 +68,19 @@ class FakeFileWatcher final : public file_observer::IFileWatcher
     {
     }
 
-    void AddFile(const QString& path) override
+    bool AddFile(const QString& path) override
     {
+        if (path.isEmpty()) return false;
         addedPaths_.append(path);
         files_.insert(path);
+        return true;
     }
 
-    void RemoveFile(const QString& path) override
+    bool RemoveFile(const QString& path) override
     {
+        if (path.isEmpty()) return false;
         removedPaths_.append(path);
-        files_.remove(path);
+        return files_.remove(path) > 0;
     }
 
     QStringList ListFiles() const override

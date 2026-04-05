@@ -102,8 +102,13 @@ void ProcessConsoleCommand(const QString& line, QTextStream& cout,
             cout << "Usage: add <path>\n";
         } else
         {
-            observer->AddFile(commandPath);
-            LogInfo(appLogger) << "Added file to monitoring: " << commandPath;
+            if (observer->AddFile(commandPath))
+            {
+                LogInfo(appLogger) << "Added file to monitoring: " << commandPath;
+            } else
+            {
+                LogWarning(appLogger) << "Failed to add file to monitoring: " << commandPath;
+            }
         }
     } else if (trimmedLine.toLower() == "remove" || trimmedLine.startsWith("remove "))
     {
@@ -113,8 +118,13 @@ void ProcessConsoleCommand(const QString& line, QTextStream& cout,
             cout << "Usage: remove <path>\n";
         } else
         {
-            observer->RemoveFile(commandPath);
-            LogInfo(appLogger) << "Removed file from monitoring: " << commandPath;
+            if (observer->RemoveFile(commandPath))
+            {
+                LogInfo(appLogger) << "Removed file from monitoring: " << commandPath;
+            } else
+            {
+                LogWarning(appLogger) << "Failed to remove file from monitoring: " << commandPath;
+            }
         }
     } else
     {
@@ -175,8 +185,13 @@ int main(int argc, char* argv[])
 
     for (const auto& path : paths)
     {
-        observer->AddFile(path);
-        LogInfo(appLogger) << "Added file to monitoring: " << path;
+        if (observer->AddFile(path))
+        {
+            LogInfo(appLogger) << "Added file to monitoring: " << path;
+        } else
+        {
+            LogWarning(appLogger) << "Failed to add file to monitoring: " << path;
+        }
     }
 
     LogInfo(appLogger) << "Monitoring started";
